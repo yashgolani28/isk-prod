@@ -1,0 +1,170 @@
+[
+  {
+    "ts": "2025-09-24T14:22:51",
+    "u": 137.33124187474442,
+    "v": 54.79725630651199,
+    "r": 2.4623561715136386,
+    "az": -58.016838715325065,
+    "el": -4.752935144575909,
+    "meta": {
+      "source": "manual",
+      "snapshot_path": "C:\\ESSI\\Projects\\isk6843\\snapshots\\speeding_20250924_142249_482.jpg",
+      "candidate_index": 0,
+      "camera_id": 176
+    }
+  },
+  {
+    "ts": "2025-09-24T14:22:56",
+    "u": 494.12906415366115,
+    "v": 62.81394196865234,
+    "r": 1.088793774091826,
+    "az": 5.677870474263182,
+    "el": -3.2083147765389817,
+    "meta": {
+      "source": "manual",
+      "snapshot_path": "C:\\ESSI\\Projects\\isk6843\\snapshots\\speeding_20250924_142253_346.jpg",
+      "candidate_index": 0,
+      "camera_id": 176
+    }
+  },
+  {
+    "ts": "2025-09-24T14:23:09",
+    "u": 321.3301188347239,
+    "v": 70.83062763079269,
+    "r": 4.3801560236553625,
+    "az": -17.100024926871573,
+    "el": -10.724304007191652,
+    "meta": {
+      "source": "manual",
+      "snapshot_path": "C:\\ESSI\\Projects\\isk6843\\snapshots\\speeding_20250924_142304_639.jpg",
+      "candidate_index": 0,
+      "camera_id": 176
+    }
+  },
+  {
+    "ts": "2025-09-24T14:23:16",
+    "u": 425.3294840729732,
+    "v": 42.77222781330146,
+    "r": 3.644739963279702,
+    "az": 11.310095080959762,
+    "el": 0.3012620139216692,
+    "meta": {
+      "source": "manual",
+      "snapshot_path": "C:\\ESSI\\Projects\\isk6843\\snapshots\\speeding_20250924_142314_779.jpg",
+      "candidate_index": 0,
+      "camera_id": 176
+    }
+  },
+  {
+    "ts": "2025-09-24T14:23:22",
+    "u": 618.1283073223431,
+    "v": 111.71572450770849,
+    "r": 1.7218980824919512,
+    "az": 26.833982433701912,
+    "el": 2.353964480847346,
+    "meta": {
+      "source": "manual",
+      "snapshot_path": "C:\\ESSI\\Projects\\isk6843\\snapshots\\speeding_20250924_142318_313.jpg",
+      "candidate_index": 0,
+      "camera_id": 176
+    }
+  },
+  {
+    "ts": "2025-09-24T14:23:27",
+    "u": 595.7284440402585,
+    "v": 110.11238737528039,
+    "r": 1.7218980824919512,
+    "az": 26.833982433701912,
+    "el": 2.353964480847346,
+    "meta": {
+      "source": "manual",
+      "snapshot_path": "C:\\ESSI\\Projects\\isk6843\\snapshots\\speeding_20250924_142318_313.jpg",
+      "candidate_index": 0,
+      "camera_id": 176
+    }
+  },
+  {
+    "ts": "2025-09-24T14:23:31",
+    "u": 332.53005047576613,
+    "v": 77.24397616050497,
+    "r": 5.56800623880371,
+    "az": -0.4655312723135025,
+    "el": -0.9413402145966661,
+    "meta": {
+      "source": "manual",
+      "snapshot_path": "C:\\ESSI\\Projects\\isk6843\\snapshots\\speeding_20250924_142328_821.jpg",
+      "candidate_index": 0,
+      "camera_id": 176
+    }
+  },
+  {
+    "ts": "2025-09-24T14:23:33",
+    "u": 323.73010418637585,
+    "v": 80.4506504253611,
+    "r": 5.166074174571261,
+    "az": -0.44765541714415796,
+    "el": -0.6539500246172744,
+    "meta": {
+      "source": "manual",
+      "snapshot_path": "C:\\ESSI\\Projects\\isk6843\\snapshots\\speeding_20250924_142332_538.jpg",
+      "candidate_index": 0,
+      "camera_id": 176
+    }
+  },
+  {
+    "ts": "2025-09-24T14:23:36",
+    "u": 317.3301432486374,
+    "v": 85.26066182264532,
+    "r": 5.140776106897041,
+    "az": -1.4740629797210598,
+    "el": -1.6730273974696426,
+    "meta": {
+      "source": "manual",
+      "snapshot_path": "C:\\ESSI\\Projects\\isk6843\\snapshots\\speeding_20250924_142335_312.jpg",
+      "candidate_index": 0,
+      "camera_id": 176
+    }
+  },
+  {
+    "ts": "2025-09-24T14:23:39",
+    "u": 323.73010418637585,
+    "v": 74.83897046186286,
+    "r": 5.140684692143549,
+    "az": -1.1981190817142127,
+    "el": -1.4627828687421027,
+    "meta": {
+      "source": "manual",
+      "snapshot_path": "C:\\ESSI\\Projects\\isk6843\\snapshots\\speeding_20250924_142337_946.jpg",
+      "candidate_index": 0,
+      "camera_id": 176
+    }
+  },
+  {
+    "ts": "2025-09-24T14:23:42",
+    "u": 323.73010418637585,
+    "v": 75.64063902807689,
+    "r": 4.912258056569496,
+    "az": -0.169156941770305,
+    "el": -2.6220453546770965,
+    "meta": {
+      "source": "manual",
+      "snapshot_path": "C:\\ESSI\\Projects\\isk6843\\snapshots\\speeding_20250924_142340_905.jpg",
+      "candidate_index": 0,
+      "camera_id": 176
+    }
+  },
+  {
+    "ts": "2025-09-24T14:23:45",
+    "u": 318.1301383658547,
+    "v": 86.06233038885935,
+    "r": 3.3649114731473486,
+    "az": -0.03898103679667616,
+    "el": -4.275303078635811,
+    "meta": {
+      "source": "manual",
+      "snapshot_path": "C:\\ESSI\\Projects\\isk6843\\snapshots\\speeding_20250924_142344_115.jpg",
+      "candidate_index": 0,
+      "camera_id": 176
+    }
+  }
+]
