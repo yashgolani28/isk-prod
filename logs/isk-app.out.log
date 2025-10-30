@@ -1,0 +1,186 @@
+Creating new Ultralytics Settings v0.0.6 file  
+View Ultralytics Settings with 'yolo settings' or at 'C:\Windows\system32\config\systemprofile\AppData\Roaming\Ultralytics\settings.json'
+Update Settings with 'yolo settings key=value', i.e. 'yolo settings runs_dir=path/to/dir'. For help see https://docs.ultralytics.com/quickstart/#ultralytics-settings.
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+2025-10-29 14:02:04,746 - ERROR - [DB ERROR] Unexpected: permission denied for table users
+
+2025-10-29 14:02:04,750 - ERROR - [ERROR] Unhandled exception
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\app.py", line 3532, in login
+    user = get_user_by_username(username)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\app.py", line 653, in get_user_by_username
+    cursor.execute("SELECT id, username, password_hash, role FROM users WHERE username = %s", (username,))
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\psycopg2\extras.py", line 146, in execute
+    return super().execute(query, vars)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InsufficientPrivilege: permission denied for table users
+
+2025-10-29 14:03:32,197 - ERROR - [DB ERROR] Unexpected: permission denied for table users
+
+2025-10-29 14:03:32,198 - ERROR - [ERROR] Unhandled exception
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\app.py", line 3532, in login
+    user = get_user_by_username(username)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\app.py", line 653, in get_user_by_username
+    cursor.execute("SELECT id, username, password_hash, role FROM users WHERE username = %s", (username,))
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\psycopg2\extras.py", line 146, in execute
+    return super().execute(query, vars)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InsufficientPrivilege: permission denied for table users
+
+2025-10-29 14:04:52,682 - ERROR - [DB ERROR] Unexpected: permission denied for table users
+
+2025-10-29 14:04:52,685 - ERROR - [ERROR] Unhandled exception
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\app.py", line 3532, in login
+    user = get_user_by_username(username)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\app.py", line 653, in get_user_by_username
+    cursor.execute("SELECT id, username, password_hash, role FROM users WHERE username = %s", (username,))
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\psycopg2\extras.py", line 146, in execute
+    return super().execute(query, vars)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InsufficientPrivilege: permission denied for table users
+
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+2025-10-29 14:09:07,932 - ERROR - [DB ERROR] Unexpected: permission denied for table users
+
+2025-10-29 14:09:07,933 - ERROR - [ERROR] Unhandled exception
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\app.py", line 3532, in login
+    user = get_user_by_username(username)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\app.py", line 653, in get_user_by_username
+    cursor.execute("SELECT id, username, password_hash, role FROM users WHERE username = %s", (username,))
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\psycopg2\extras.py", line 146, in execute
+    return super().execute(query, vars)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InsufficientPrivilege: permission denied for table users
+
+2025-10-29 14:09:19,574 - ERROR - [DB ERROR] Unexpected: permission denied for table users
+
+2025-10-29 14:09:19,577 - ERROR - [ERROR] Unhandled exception
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\app.py", line 3532, in login
+    user = get_user_by_username(username)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ESSI\Projects\isk6843\app.py", line 653, in get_user_by_username
+    cursor.execute("SELECT id, username, password_hash, role FROM users WHERE username = %s", (username,))
+  File "C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\psycopg2\extras.py", line 146, in execute
+    return super().execute(query, vars)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InsufficientPrivilege: permission denied for table users
+
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+2025-10-29 14:11:41,367 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+2025-10-29 14:12:07,370 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+2025-10-29 14:12:33,723 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+2025-10-29 14:12:41,395 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+2025-10-29 14:12:57,334 - INFO - [CONTROL CAMERA TEST] RTSP URL: http://root:2024@192.168.1.241/axis-cgi/mjpg/video.cgi?streamprofile=stream1
+2025-10-29 14:12:57,342 - WARNING - [CONTROL CAMERA TEST] Unexpected failure: [WinError 2] The system cannot find the file specified
+2025-10-29 14:14:42,901 - INFO - [CONTROL CAMERA TEST] RTSP URL: http://root:2024@192.168.1.241/axis-cgi/mjpg/video.cgi?streamprofile=stream1
+2025-10-29 14:14:42,937 - WARNING - [CONTROL CAMERA TEST] Unexpected failure: [WinError 2] The system cannot find the file specified
+2025-10-29 14:14:49,251 - ERROR - [BACKUP ERROR] Unexpected: pg_dump not found. Install PostgreSQL client tools or set PG_DUMP.
+2025-10-29 14:14:49,290 - INFO - [CONTROL CAMERA TEST] RTSP URL: http://root:2024@192.168.1.241/axis-cgi/mjpg/video.cgi?streamprofile=stream1
+2025-10-29 14:14:49,296 - WARNING - [CONTROL CAMERA TEST] Unexpected failure: [WinError 2] The system cannot find the file specified
+2025-10-29 14:15:53,079 - WARNING - [CHART FETCH] HTTPConnectionPool(host='127.0.0.1', port=5000): Max retries exceeded with url: /api/charts?days=0 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001C5951D5F90>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+2025-10-29 14:16:49,554 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+2025-10-29 14:18:55,245 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+2025-10-29 14:20:29,966 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+2025-10-29 14:21:17,793 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+2025-10-29 14:21:30,173 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+2025-10-29 10:04:40,786 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+2025-10-29 10:05:11,017 - INFO - [CONTROL CAMERA TEST] RTSP URL: http://root:2024@192.168.1.241/axis-cgi/mjpg/video.cgi?streamprofile=stream1
+2025-10-29 10:05:11,034 - WARNING - [CONTROL CAMERA TEST] Unexpected failure: [WinError 2] The system cannot find the file specified
+2025-10-29 10:05:22,284 - INFO - [CONTROL CAMERA TEST] RTSP URL: http://root:2024@192.168.1.241/axis-cgi/mjpg/video.cgi?streamprofile=stream1
+2025-10-29 10:05:22,290 - WARNING - [CONTROL CAMERA TEST] Unexpected failure: [WinError 2] The system cannot find the file specified
+2025-10-29 10:06:38,202 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+2025-10-29 10:06:42,322 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+2025-10-29 10:10:46,183 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+2025-10-29 10:10:56,544 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+[DEBUG] Annotating snapshot: C:\ESSI\Projects\isk6843\snapshots\manual_20251029_101124.jpg
+[DEBUG] Radar azimuth projected to pixel: 293.96388203477176
+[DEBUG] No valid bounding box matched.
+2025-10-29 10:11:31,784 - ERROR - [CAMERA_FEED] ffmpeg not found; falling back to snapshot loop
+2025-10-29 10:13:22,434 - INFO - [CONTROL CAMERA TEST RESULT] camera_ok = True
+2025-10-29 10:27:50,937 - INFO - [CONTROL CAMERA TEST RESULT] camera_ok = True
+2025-10-29 10:28:08,698 - INFO - [CONTROL CAMERA TEST RESULT] camera_ok = True
+2025-10-29 10:30:48,964 - INFO - [CONTROL CAMERA TEST RESULT] camera_ok = True
+[INFO] Custom model loaded successfully.
+[INFO] Loaded camera projection matrix from calibration/camera_projection_matrix.npy
+2025-10-29 10:33:26,501 - INFO - [CONTROL CAMERA TEST RESULT] camera_ok = True

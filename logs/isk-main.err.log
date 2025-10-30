@@ -1,0 +1,711 @@
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "C:\ESSI\Projects\isk6843\main.py", line 49, in <module>
+    from bounding_box import annotate_speeding_object
+  File "C:\ESSI\Projects\isk6843\bounding_box.py", line 1, in <module>
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator LabelEncoder from version 1.4.2 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator StandardScaler from version 1.4.2 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator LabelEncoder from version 1.4.2 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator StandardScaler from version 1.4.2 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+websocket-client package not installed, only polling transport is available
+C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator LabelEncoder from version 1.4.2 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator StandardScaler from version 1.4.2 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+websocket-client package not installed, only polling transport is available
+websocket-client package not installed, only polling transport is available
+C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator LabelEncoder from version 1.4.2 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator StandardScaler from version 1.4.2 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator LabelEncoder from version 1.4.2 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator StandardScaler from version 1.4.2 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator LabelEncoder from version 1.4.2 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\ESSI\Projects\isk6843\.venv\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator StandardScaler from version 1.4.2 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
