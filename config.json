@@ -1,0 +1,168 @@
+{
+  "radar_over_ip": {
+    "enabled": true,
+    "role": "pi-bridge",          
+    "bind": "0.0.0.0",
+    "port": 6868,
+    "format": "jsonl",
+    "compress": false,
+    "heartbeat_seconds": 2.0,
+    "stale_cutoff_seconds": 5.0
+  },
+  "ptz_autotrack": false,
+  "ptz": {
+    "host": "192.168.40.51",
+    "username": "admin",
+    "password": "Essi@1234",
+    "port": 80,
+    "kp": 0.015,
+    "deadband_deg": 1.5,
+    "nudge_seconds": 0.35,
+    "max_rate_hz": 3.0,
+    "ui_velocity": 0.40,
+    "ui_seconds": 0.60,
+    "mount": {
+      "dx_m": 0.0,
+      "dy_m": 0.0,
+      "dz_m": -1.0,
+      "yaw_deg": 0.0,
+      "pitch_deg": 0.0,
+      "roll_deg": 0.0
+    },
+    "home": { 
+      "pan_deg": 0.0, "tilt_deg": -2.0, "zoom": 1.5,
+      "wait_settle": true, "settle_s": 0.8
+    },
+    "control": {
+      "deadband_deg": 0.35,
+      "k_pan": 0.70,
+      "k_tilt": 0.60,
+      "max_vx": 0.85,
+      "max_vy": 0.85,
+      "max_step_s": 0.25,
+      "stop_pulse_s": 0.08
+    },
+    "zoom": { "min": 1.0, "max": 20.0 },
+    "intrinsics": { "fov_h_deg": 60.0 },
+    "zoom_target_m": 12.0,
+    "zoom_deadband_m": 2.0,
+    "zoom_kp": 0.08,
+    "zoom_seconds": 0.35,
+    "zoom_enable_error_deg": 4.0,
+    "auto_track": { "home_on_enable": true, "settle_s": 1.2, "acquire_timeout_s": 4.0 }
+  },
+  "site": {
+    "site_id": "ESSI-HO",
+    "name": "ESSI Head Office",
+    "address": "ESSI HO, 101, Mercantile House, KG Marg, New Delhi - 110001",
+    "lat": 28.6139,
+    "lon": 77.2090,
+    "timezone": "Asia/Kolkata"
+  },
+  "pi_health_url": "http://192.168.1.108:6060/health",
+  "db": {
+    "dsn": "",
+    "host": "192.168.1.100",
+    "user": "radar_user",
+    "password": "essi",
+    "name": "iwr6843_db",
+    "sslmode": "disable"
+  },
+  "location": {
+    "enabled": true,
+    "prefer_gps": true,
+    "gpsd_host": "127.0.0.1",
+    "gpsd_port": 2947,
+    "poll_seconds": 60
+  },
+  "acceleration_threshold": 2.0,
+  "min_acc_violation_frames": 3,
+  "cooldown_seconds": 0.1,
+  "retention_days": 30,                                                                                                                  
+  "selected_camera": 0,
+  "camera_enabled": true,
+  "cameras": [
+    {
+      "id": "176",
+      "name": "Front",
+      "url": "http://root:2024@192.168.1.241/axis-cgi/mjpg/video.cgi?streamprofile=stream1",
+      "snapshot_url": "http://192.168.1.241/axis-cgi/jpg/image.cgi",
+      "username": "root",
+      "password": "2024",
+      "stream_type": "rtsp",
+      "role": "primary",
+      "enabled": true
+    },
+    {
+      "id": "177",
+      "name": "Dome",
+      "url": "http://192.168.1.240/axis-cgi/mjpg/video.cgi",
+      "snapshot_url": "",
+      "username": "root",
+      "password": "Essi1234",
+      "stream_type": "mjpeg",
+      "role": "aux",
+      "enabled": true
+    },
+    {
+      "id": "182",
+      "name": "PTZ",
+      "url": "rtsp://192.168.40.51:554/videoStreamId=1",
+      "snapshot_url": "",
+      "username": "admin",
+      "password": "Essi@1234",
+      "stream_type": "rtsp",
+      "role": "ptz",
+      "enabled": true
+    }
+  ],
+  "camera_width_px": 640,
+  "camera_height_px": 480,
+  "camera_fov_h_deg": 90.0,
+  "distortion": [0.0, 0.0, 0.0, 0.0, 0.0],
+  "calibration_mode": false,
+  "calibration_min_points": 12,
+  "enable_plotter": true,
+  "calibration_reproj_ok_px": 6.0,
+  "use_speed_correction": true,
+  "dynamic_speed_limits": {
+    "HUMAN": 2.0,
+    "CAR": 70.0,
+    "TRUCK": 50.0,
+    "BUS": 50.0,
+    "BIKE": 60.0,
+    "BICYCLE": 50.0,
+    "UNKNOWN": 50.0,
+    "default": 2.0
+  },
+  "annotation_conf_threshold": 0.5,
+  "label_format": "{type} | {speed:.1f} km/h",
+  "strict_radial_only": true,
+  "violation_speed_field": "speed_radial_kmh",
+  "min_movement_m": 0.25,
+  "disable_unwrap_for_classes": [
+    "HUMAN",
+    "PERSON",
+    "PEDESTRIAN"
+  ],
+  "radar": { 
+    "model": "IWR6843ISK",
+    "center_frequency_ghz": 60.75
+  },
+  "unambiguous_speed_ms": 4.615,
+  "unwrap_k_max": 1,
+  "cos_guard": 0.60,
+  "speed_correction_max_scale": 2.0,
+  "fusion_alpha": 0.35,
+  "min_snr_db": 6.0,
+  "pretrack_safe_max_vel_ms": 20.0,
+  "pretrack_safe_max_range_m": 120.0,
+  "clips_enabled": true,
+  "aux_clips_enabled": true,
+  "clip_target_fps": 6.0,
+  "clip_pre_seconds": 3.0,
+  "clip_post_seconds": 2.0,
+  "clip_buffer_margin": 3.0,
+  "clip_timeout": 3.0,
+  "viz_ws": { "enabled": true, "url": "http://127.0.0.1:8000", "event": "viz_frame", "namespace": "/" }
+}

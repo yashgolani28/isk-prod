@@ -1,0 +1,207 @@
+{
+  "radar_over_ip": {
+    "enabled": true,
+    "role": "pc",
+    "host": "192.168.1.108",
+    "port": 55000,
+    "format": "jsonl",
+    "compress": false,
+    "heartbeat_seconds": 2.0,
+    "stale_cutoff_seconds": 5.0,
+    "bind": "0.0.0.0"
+  },
+  "ptz_autotrack": true,
+  "ptz": {
+    "host": "192.168.40.51",
+    "username": "admin",
+    "password": "Essi@1234",
+    "port": 80,
+    "scheme": "http",
+    "auth_mode": "none",
+    "kp": 0.015,
+    "deadband_deg": 1.5,
+    "nudge_seconds": 0.35,
+    "max_rate_hz": 3.0,
+    "ui_velocity": 0.4,
+    "ui_seconds": 0.6,
+    "mount": {
+      "dx_m": 0.0,
+      "dy_m": -0.75,
+      "dz_m": -1.0,
+      "yaw_deg": 0.0,
+      "pitch_deg": 0.0,
+      "roll_deg": 180.0
+    },
+    "home": {
+      "pan_deg": 0.0,
+      "tilt_deg": -2.0,
+      "zoom": 1.5,
+      "wait_settle": true,
+      "settle_s": 0.8
+    },
+    "control": {
+      "deadband_deg": 0.35,
+      "k_pan": 0.7,
+      "k_tilt": 0.6,
+      "max_vx": 0.85,
+      "max_vy": 0.85,
+      "max_step_s": 0.25,
+      "stop_pulse_s": 0.08
+    },
+    "zoom": {
+      "min": 1.0,
+      "max": 6.0
+    },
+    "intrinsics": {
+      "fov_h_deg": 60.0
+    },
+    "zoom_target_m": 18.0,
+    "zoom_deadband_m": 5.0,
+    "zoom_kp": 0.03,
+    "zoom_seconds": 0.2,
+    "zoom_enable_error_deg": 2.0,
+    "auto_track": {
+      "home_on_enable": true,
+      "settle_s": 1.2,
+      "acquire_timeout_s": 4.0
+    }
+  },
+  "site": {
+    "site_id": "ESSI-HO",
+    "name": "ESSI Head Office",
+    "address": "ESSI HO, 101, Mercantile House, KG Marg, New Delhi - 110001",
+    "lat": 28.62665554188639,
+    "lon": 77.22268206327007,
+    "timezone": "Asia/Kolkata"
+  },
+  "pi_health_url": "http://192.168.1.108:6060/health",
+  "db": {
+    "host": "localhost",
+    "name": "iwr6843_db",
+    "user": "radar_user",
+    "password": "essi",
+    "sslmode": "disable",
+    "dsn": "postgresql://radar_user:essi@localhost/iwr6843_db"
+  },
+  "location": {
+    "enabled": true,
+    "prefer_gps": true,
+    "gpsd_host": "127.0.0.1",
+    "gpsd_port": 2947,
+    "poll_seconds": 60
+  },
+  "acceleration_threshold": 2.0,
+  "min_acc_violation_frames": 3,
+  "cooldown_seconds": 0.3,
+  "retention_days": 29,
+  "selected_camera": 0,
+  "camera_enabled": true,
+  "cameras": [
+    {
+      "id": "176",
+      "name": "Front",
+      "url": "http://root:2024@192.168.1.241/axis-cgi/mjpg/video.cgi?streamprofile=stream1",
+      "snapshot_url": "http://192.168.1.241/axis-cgi/jpg/image.cgi",
+      "username": "root",
+      "password": "2024",
+      "stream_type": "mjpeg",
+      "role": "primary",
+      "enabled": true
+    }
+  ],
+  "clips_enabled": true,
+  "aux_clips_enabled": true,
+  "clip_target_fps": 6.0,
+  "clip_pre_seconds": 3.0,
+  "clip_post_seconds": 2.0,
+  "clip_buffer_margin": 3.0,
+  "clip_timeout": 3.0,
+  "camera_width_px": 640,
+  "camera_height_px": 480,
+  "camera_fov_h_deg": 90.0,
+  "distortion": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "calibration_mode": false,
+  "calibration_min_points": 12,
+  "calibration_reproj_ok_px": 6.0,
+  "use_speed_correction": true,
+  "dynamic_speed_limits": {
+    "HUMAN": 70.0,
+    "CAR": 70.0,
+    "TRUCK": 50.0,
+    "BUS": 50.0,
+    "BIKE": 60.0,
+    "BICYCLE": 20.0,
+    "UNKNOWN": 50.0,
+    "default": 70.0
+  },
+  "annotation_conf_threshold": 0.1,
+  "label_format": "{type} | {speed:.1f} km/h",
+  "strict_radial_only": true,
+  "violation_speed_field": "speed_radial_kmh",
+  "min_movement_m": 0.25,
+  "disable_unwrap_for_classes": [
+    "HUMAN",
+    "PERSON",
+    "PEDESTRIAN"
+  ],
+  "vision_motion_threshold": 3.0,
+  "radar_get_timeout": 0.8,
+  "radar_stall_retries": 3,
+  "watchdog_hard_exit_after": 0,
+  "radar": {
+    "model": "IWR6843ISK",
+    "center_frequency_ghz": 60.75
+  },
+  "unambiguous_speed_ms": 4.615,
+  "unwrap_k_max": 1,
+  "cos_guard": 0.6,
+  "speed_correction_max_scale": 2.0,
+  "fusion_alpha": 0.35,
+  "min_snr_db": 6.0,
+  "pretrack_safe_max_vel_ms": 20.0,
+  "pretrack_safe_max_range_m": 120.0,
+  "absolute_max_speed_kmh": 220.0,
+  "absolute_max_distance_m": 200.0,
+  "tracker_max_range_m": 150.0,
+  "tracker_min_range_m": 0.2,
+  "tracker_max_radial_mps": 80.0,
+  "tracker_max_speed_mps": 80.0,
+  "tracker_low_snr_margin_db": 3.0,
+  "iwr_ports": {
+    "cli": "/dev/ttyACM1",
+    "data": "/dev/ttyACM2",
+    "cfg_path": "isk_config.cfg"
+  },
+  "viz_ws": {
+    "enabled": true,
+    "url": "http://127.0.0.1:8000",
+    "event": "viz_frame",
+    "namespace": "/"
+  },
+  "kafka": {
+    "enabled": false,
+    "bootstrap_servers": "localhost:9092",
+    "client_id": "iwr6843-app",
+    "acks": 1,
+    "compression_type": "gzip",
+    "topic_violation": "violations",
+    "topic_metrics": "metrics",
+    "topic_events": "events",
+    "topic_frames": "camera_frames",
+    "topic_clips": "camera_clips",
+    "topic_plotter": "plotter_frames",
+    "ssl": {
+      "enabled": false,
+      "cafile": "",
+      "certfile": "",
+      "keyfile": "",
+      "check_hostname": true
+    }
+  }
+}
