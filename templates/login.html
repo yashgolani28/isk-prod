@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>Sign in · Speed Violation Detection System</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg-top:#f5f9ff;
+      --bg-bottom:#e8f2ff;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#5b708a;
+      --primary:#3b82f6;
+      --primary-2:#60a5fa;
+      --ring:rgba(59,130,246,.35);
+    }
+    html, body { height: 100%; }
+    body{
+      background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      color: var(--text);
+      font-family: system-ui,-apple-system,"Segoe UI",Roboto,Inter,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+    }
+    .page-wrap{
+      min-height: 100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:32px 16px;
+    }
+    .login-card{
+      width:100%;
+      max-width:540px;
+      background:var(--card);
+      border-radius:18px;
+      box-shadow:0 12px 30px rgba(15,23,42,.08);
+      padding:28px 24px;
+    }
+    .brand-area img{
+      width:120px;height:auto;object-fit:contain;
+      filter: drop-shadow(0 2px 6px rgba(2,6,23,.08));
+    }
+    .title{ font-weight:800; letter-spacing:.2px; }
+    .welcome{ color:var(--muted); font-size:.98rem; }
+
+    .form-control{
+      border-radius:12px; padding:10px 12px;
+      border:1px solid #e5ecff;
+    }
+    .form-control:focus{
+      border-color:var(--primary-2);
+      box-shadow:0 0 0 .25rem var(--ring);
+    }
+    .btn-primary{
+      background:var(--primary); border-color:var(--primary);
+      border-radius:12px; padding:10px 14px; font-weight:600;
+    }
+    .btn-primary:hover{ background:var(--primary-2); border-color:var(--primary-2); }
+    .helper a{ color:var(--primary); text-decoration:none; }
+    .helper a:hover{ text-decoration:underline; }
+
+    .company{ color:var(--muted); font-size:.9rem; }
+    .contact-list{ list-style:none; padding-left:0; margin:8px 0 0; }
+    .contact-list li{ margin:2px 0; }
+
+    .meta-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    @media (max-width: 420px){ .meta-row{ flex-direction:column; align-items:flex-start; } }
+  </style>
+</head>
+
+<body>
+  <main class="page-wrap">
+    <section class="login-card">
+      <!-- Centered logo -->
+      <div class="brand-area text-center mb-3">
+        <img
+          src="{{ url_for('static', filename='essi_logo.jpeg') }}"
+          alt="ESSI logo"
+          loading="eager"
+          decoding="sync"
+        />
+      </div>
+
+      <!-- Centered system title -->
+      <h1 class="h4 text-center title mb-1">Speed Violation Detection System</h1>
+
+      <!-- Welcome message -->
+      <p class="text-center welcome mb-4">
+        Welcome. Please sign in to continue.
+      </p>
+
+      {# --- Flashed messages (success + error) --- #}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category=='error' else 'success' }} py-2" role="alert">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {# Optional query-based logout message support #}
+      {% if request.args.get('logged_out') %}
+        <div class="alert alert-success py-2" role="alert">
+          You have logged out successfully.
+        </div>
+      {% endif %}
+
+      {% if error %}
+      <div class="alert alert-danger py-2" role="alert">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <!-- Login form (stacked) -->
+      <form method="POST" action="{{ url_for('login') }}" id="loginForm" novalidate>
+        {% if request.args.get('next') %}
+          <input type="hidden" name="next" value="{{ request.args.get('next') }}">
+        {% endif %}
+
+        <div class="mb-3">
+          <label for="username" class="form-label">Username</label>
+          <input
+            type="text"
+            class="form-control"
+            id="username"
+            name="username"
+            placeholder="Enter your username"
+            autocomplete="username"
+            required
+            value="{{ prefill_username or '' }}"
+          />
+        </div>
+
+        <div class="mb-2">
+          <label for="password" class="form-label">Password</label>
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            name="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+
+        <div class="meta-row mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="1" id="remember" name="remember" />
+            <label class="form-check-label" for="remember"> Remember me </label>
+          </div>
+          <!-- Forgot password: redirect to route -->
+          <div class="helper">
+            <a href="#" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover" onclick="event.preventDefault(); alert('Ask an admin to reset your password.');">Forgot password?</a>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" id="loginBtn">
+          Sign in
+        </button>
+      </form>
+
+      <!-- Company info (stacked, centered) -->
+      <div class="text-center company mt-4">
+        <div class="fw-semibold">ESSI · ELKOSTA SECURITY SYSTEMS INDIA</div>
+        <div>Radar Based Speed Detection System</div>
+
+        <!-- Contact details (fill with your earlier-provided values) -->
+        <ul class="contact-list mt-2">
+          <li><strong>Phone:</strong> {{ company_phone or '+91 011 4151 9899' }}</li>
+          <li><strong>Fax:</strong> {{ company_fax or '+91 011 4151 9898' }}</li>
+          <li><strong>Email:</strong> <a href="mailto:{{ company_email or 'info@essi.co.in' }}">{{ company_email or 'sales@essi.co.in' }}</a></li>
+          <li><strong>Address:</strong> {{ company_address or '101 Mercantile House, 15 Kasturba Gandhi Marg, New Delhi (110001)' }}</li>
+        </ul>
+
+        <div class="mt-3">
+          © {{ now.year if now else 2025 }} <a href="https://www.essi.co.in/" target="_blank" rel="noopener">www.essi.co.in</a>. All rights reserved.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Basic submit UX
+    const form = document.getElementById('loginForm');
+    const btn  = document.getElementById('loginBtn');
+    form?.addEventListener('submit', (e) => {
+      if (!form.checkValidity()) {
+        e.preventDefault(); e.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+      }
+      btn.disabled = true;
+      btn.insertAdjacentHTML('beforeend','<span class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span>');
+      setTimeout(() => { btn.disabled = false; btn.querySelector('.spinner-border')?.remove(); }, 15000);
+    });
+  </script>
+</body>
+</html>

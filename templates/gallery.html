@@ -1,0 +1,1897 @@
+{% extends "base.html" %}
+{% block title %}Snapshot Gallery{% endblock %}
+{% block content %}
+<style>
+/* compact form + card spacing just for control page */
+.control-compact .card-header{padding:.5rem .75rem}
+.control-compact .card-body{padding:.75rem}
+.control-compact .form-control,
+.control-compact .form-select,
+.control-compact .btn{padding:.35rem .5rem; font-size:.875rem}
+.control-compact .row.g-3{--bs-gutter-x: .75rem; --bs-gutter-y: .75rem}
+.control-compact .row.g-2{--bs-gutter-x: .5rem; --bs-gutter-y: .5rem}
+
+/* PTZ inputs even tighter */
+.control-compact .ptz-settings .form-control,
+.control-compact .ptz-settings .form-select { padding:.25rem .5rem; font-size:.84rem }
+</style>
+<div class="control-compact">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: var(--text-color);">Detection Gallery</h2>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-secondary">{{ snapshots|length }} Detections</span>
+      <span class="badge bg-dark" id="selectedCountBadge">0 selected</span>
+    </div>
+</div>
+
+<!-- Filters -->
+{% set has_filters = request.args.get('min_speed') or request.args.get('max_speed') or
+                     request.args.get('type') or request.args.get('direction') or
+                     request.args.get('motion_state') or request.args.get('snapshot_type') or
+                     request.args.get('start_date') or request.args.get('end_date') or
+                     request.args.get('object_id') or request.args.get('min_confidence') or
+                     request.args.get('max_confidence') or request.args.get('reviewed_only') or
+                     request.args.get('flagged_only') or request.args.get('unannotated_only') or
+                     request.args.get('selected') %}
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0">Filters</h5>
+      <button id="filtersToggleBtn"
+              class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#filterCollapse"
+              aria-controls="filterCollapse"
+              aria-expanded="{{ 'true' if has_filters else 'false' }}">
+        <i class="fas fa-sliders-h me-2"></i>
+        <span class="toggle-text">{{ 'Hide Filters' if has_filters else 'Show Filters' }}</span>
+      </button>
+    </div>
+    <div class="collapse {% if has_filters %}show{% endif %}" id="filterCollapse">
+    <form method="GET" class="row g-3 mt-3" id="filterForm" action="{{ url_for('gallery') }}">
+    <input type="hidden" name="download" value="0">
+    <input type="hidden" name="selected" id="selectedInput" value="{{ request.args.get('selected','') }}">
+
+    <!-- Row 1: Speed, Type, Direction, Motion, Snapshot Type -->
+    <div class="col-md-2">
+        <label class="form-label">Min Speed (km/h)</label>
+        <input type="number" name="min_speed" class="form-control" step="0.1"
+            value="{{ request.args.get('min_speed', '') }}" placeholder="0">
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Max Speed (km/h)</label>
+        <input type="number" name="max_speed" class="form-control" step="0.1"
+            value="{{ request.args.get('max_speed', '') }}" placeholder="999">
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Object Type</label>
+        <select name="type" class="form-select">
+        <option value="">All Types</option>
+        {% for opt in ['VEHICLE', 'HUMAN', 'CAR', 'TRUCK', 'BIKE', 'UNKNOWN'] %}
+            <option value="{{ opt }}" {% if request.args.get('type') == opt %}selected{% endif %}>{{ opt.title() }}</option>
+        {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Direction</label>
+        <select name="direction" class="form-select">
+        <option value="">All</option>
+        {% for opt in ['Towards', 'Away','Stationary','Right', 'Left','Unknown']%}
+            <option value="{{ opt }}" {% if request.args.get('direction') == opt %}selected{% endif %}>{{ opt.title() }}</option>
+        {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Motion</label>
+        <select name="motion_state" class="form-select">
+        <option value="">All</option>
+        {% for opt in ['moving', 'speeding', 'static'] %}
+            <option value="{{ opt }}" {% if request.args.get('motion_state') == opt %}selected{% endif %}>{{ opt.title() }}</option>
+        {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Snapshot Type</label>
+        <select name="snapshot_type" class="form-select">
+        <option value="">All</option>
+        <option value="manual" {% if request.args.get('snapshot_type') == 'manual' %}selected{% endif %}>Manual</option>
+        <option value="auto" {% if request.args.get('snapshot_type') == 'auto' %}selected{% endif %}>Auto</option>
+        </select>
+    </div>
+
+    <!-- Row 2: Dates and Object ID -->
+    <div class="col-md-3">
+        <label class="form-label">Start Date</label>
+        <input type="date" name="start_date" class="form-control"
+            value="{{ request.args.get('start_date', '') }}">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">End Date</label>
+        <input type="date" name="end_date" class="form-control"
+            value="{{ request.args.get('end_date', '') }}">
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Object ID</label>
+        <input type="text" name="object_id" class="form-control"
+            value="{{ request.args.get('object_id', '') }}" placeholder="Search by ID">
+    </div>
+
+    <!-- Row 3: Confidence, Pagination, Checkboxes (single non-wrapping row) -->
+    <div class="col-12">
+      <div class="d-flex align-items-end flex-nowrap gap-3 overflow-auto py-1">
+        <div class="d-flex flex-column" style="min-width:180px;">
+          <label class="form-label">Min Confidence</label>
+          <input type="number" name="min_confidence" class="form-control" step="0.01" min="0" max="1"
+                 value="{{ request.args.get('min_confidence', '') }}" placeholder="0.0">
+        </div>
+        <div class="d-flex flex-column" style="min-width:180px;">
+          <label class="form-label">Max Confidence</label>
+          <input type="number" name="max_confidence" class="form-control" step="0.01" min="0" max="1"
+                 value="{{ request.args.get('max_confidence', '') }}" placeholder="1.0">
+        </div>
+        <div class="d-flex flex-column" style="min-width:140px;">
+          <label class="form-label">Page</label>
+          <input type="number" name="page" class="form-control" min="1"
+                 value="{{ request.args.get('page', 1) }}">
+        </div>
+        <div class="d-flex flex-column" style="min-width:140px;">
+          <label class="form-label">Limit</label>
+          <input type="number" name="limit" class="form-control" min="10"
+                 value="{{ request.args.get('limit', 100) }}">
+        </div>
+        <div class="d-flex align-items-center ms-2 gap-3" style="white-space:nowrap;">
+          <div class="form-check form-check-inline m-0">
+            <input class="form-check-input" type="checkbox" name="reviewed_only" value="1" id="reviewed_only"
+                   {% if request.args.get('reviewed_only') == '1' %}checked{% endif %}>
+            <label class="form-check-label" for="reviewed_only">Reviewed</label>
+          </div>
+          <div class="form-check form-check-inline m-0">
+            <input class="form-check-input" type="checkbox" name="flagged_only" value="1" id="flagged_only"
+                   {% if request.args.get('flagged_only') == '1' %}checked{% endif %}>
+            <label class="form-check-label" for="flagged_only">Flagged</label>
+          </div>
+          <div class="form-check form-check-inline m-0">
+            <input class="form-check-input" type="checkbox" name="unannotated_only" value="1" id="unannotated_only"
+                   {% if request.args.get('unannotated_only') == '1' %}checked{% endif %}>
+            <label class="form-check-label" for="unannotated_only">Unannotated</label>
+          </div>
+          <div class="form-check form-check-inline m-0">
+            <input class="form-check-input" type="checkbox" id="selected_filter"
+                   {% if request.args.get('selected') %}checked{% endif %}>
+            <label class="form-check-label" for="selected_filter">Selected</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 4: Action Buttons -->
+    <div class="col-12 mt-3">
+        <hr class="my-3">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-3">
+              <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+          </div>
+          <div class="col-md-3">
+              <a href="{{ url_for('gallery') }}" class="btn btn-primary w-100">Clear Filters</a>
+          </div>
+          <div class="col-md-3">
+              <button type="button" id="downloadZipBtn" class="btn btn-primary w-100">Download ZIP</button>
+          </div>
+          <div class="col-md-3">
+              <button type="button" id="downloadReportsBtn" class="btn btn-primary w-100">Download Reports</button>
+          </div>
+        {% if current_user.is_authenticated and is_admin() %}
+        <div class="row g-2 mt-2 align-items-center">
+          <div class="col-12 d-grid">
+            <button type="button" id="bulkDeleteBtn" class="btn btn-outline-danger">Delete</button>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    </form>
+    </div>
+  </div>
+</div>
+
+<!-- Gallery -->
+<style>
+  /* Uniform footer buttons with a calm, professional feel */
+  #imageModal .modal-footer { gap: .5rem; }
+  #imageModal .modal-footer .btn {
+    min-width: 120px;
+    padding: .5rem 1rem;
+    border-radius: .5rem;
+  }
+  #imageModal .modal-footer { justify-content: center; }  /* center buttons */
+  /* Center vertically and make the modal content occupy most of the viewport */
+  #imageModal { padding: 0; }
+  #imageModal .modal-dialog {
+    max-width: 95vw;
+  }
+  #imageModal .modal-content {
+    height: 90vh;                         /* big, but leaves a little room */
+    display: grid;
+    grid-template-rows: auto 1fr auto;    /* header | body | footer */
+  }
+  #imageModal .modal-body {
+    overflow: hidden;                     /* internal panes handle scroll */
+  }
+  #imageModal .modal-body .row { height: 100%; }
+  #imageModal .col-md-8, #imageModal .col-md-4 { height: 100%; min-height: 0; }
+  #imageModal .col-md-8 { display: flex; flex-direction: column; min-height: 0; }
+  /* Right pane scrolls if content is long */
+  #imageModal .col-md-4 { overflow-y: auto; }
+  /* Make media fill the left pane vertically (override any later styles) */
+  #modalImage,
+  #modalVideo {
+    flex: 1 1 auto;       /* ← key: share space with the strip */
+    min-height: 0;
+    width: 100%;
+    object-fit: contain;
+    background: #000;
+  }
+  #modalVideo { display: none; } /* shown on Play */
+  #modalMediaStrip { flex: 0 0 auto; }  /* strip always visible */
+  #modalVerifyPanel { flex: 1 1 auto; min-height: 0; overflow: auto; }
+  /* Stack nicely on phones */
+  @media (max-width: 576px) {
+    #imageModal .modal-footer { flex-wrap: wrap; }
+    #imageModal .modal-footer .btn { min-width: 0; flex: 1 1 auto; }
+  }
+</style>
+
+{% if snapshots %}
+
+<style>
+  /* Compact gallery cards */
+  .gallery-card .card-img-top{height:140px;object-fit:cover}
+  .gallery-card .card-body{padding:.5rem}
+  .gallery-card h6{font-size:.95rem;margin-bottom:.25rem}
+  .gallery-card small{font-size:.78rem}
+  .gallery-card.selectable { cursor: pointer; }
+  .gallery-card.selected  { outline: 3px solid var(--bs-primary); outline-offset: 2px; }
+  .select-checkbox { width:1.1rem; height:1.1rem; z-index:2; }
+
+  .plate-chip{
+    height: 40px;          /* bigger & readable */
+    width: auto;           /* keep aspect ratio */
+    max-width: 180px;      /* don’t overflow the card */
+    margin-left: 6px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    padding: 2px;          /* slight padding for contrast */
+  }
+  /* Media strip below the main image */
+  .media-strip { display:flex; gap:6px; padding:.5rem; flex-wrap:wrap; }
+  .media-thumb { width:48px; height:48px; border-radius:6px; overflow:hidden; background:#111; position:relative; border:1px solid rgba(255,255,255,.15); }
+  .media-thumb img, .media-thumb video { width:100%; height:100%; object-fit:cover; display:block; }
+  .media-thumb video{ pointer-events:none; background:#000; }
+  .media-thumb .play-badge { position:absolute; inset:auto 4px 4px auto; background:rgba(0,0,0,.65); border-radius:6px; padding:2px 6px; font-size:.7rem; color:#fff; }
+  /* One-color, professional action buttons */
+  .action-bar{display:flex; gap:.4rem; padding:.25rem .5rem .5rem .5rem}
+  .action-bar .btn{ --bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .8rem; }
+  .btn-slate{ background:#2b3035; color:#e9ecef; border:1px solid rgba(255,255,255,.15); }
+  .btn-slate:hover{ background:#343a40; color:#fff; }
+  /* Evidence verify UI */
+  .verify-badge{ font-size:.72rem; }
+  .verify-area .btn{ --bs-btn-font-size: .75rem; --bs-btn-padding-y: .2rem; --bs-btn-padding-x: .45rem; }
+  .badge-ok{ background:#198754 !important; }
+  .badge-bad{ background:#c62828 !important; }
+  .badge-unk{ background:#6c757d !important; }
+  /* Inline verification details panel */
+  .verify-details{ background:#0d1117; border:1px solid rgba(255,255,255,.1); border-radius:.5rem; }
+  .verify-details table{ width:100%; font-size:.85rem; }
+  .verify-details th, .verify-details td{ padding:.25rem .5rem; border-top:1px solid rgba(255,255,255,.06); vertical-align:top; }
+  .status-ok{ color:#198754; font-weight:600; }
+  .status-bad{ color:#dc3545; font-weight:600; }
+  .status-unk{ color:#adb5bd; font-weight:600; }
+</style>
+
+<div class="row row-cols-2 row-cols-md-4 row-cols-xl-6 g-3" id="galleryContainer">
+  {% for snap in snapshots %}
+  <div class="col" data-snapshot="{{ snap.filename }}">
+    <div class="card h-100 gallery-card selectable">
+      <div class="position-relative">
+        <input type="checkbox"
+               class="form-check-input select-checkbox position-absolute top-0 start-0 m-2"
+               data-filename="{{ snap.filename }}">
+        {# Prefer server-computed URL that is guaranteed valid #}
+        {% set _main_url =
+             snap.main_thumb_url
+             or ( url_for('serve_snapshot', filename=snap.filename)
+                  if (snap.main_thumb and (snap.main_thumb == snap.filename))
+                  else url_for('bundle_asset', snapshot=snap.filename, name=snap.main_thumb or 'image.jpg') )
+        %}
+        <div class="gallery-image-container"
+          data-image="{{ _main_url }}"
+          data-title="{{ snap.type }} Detection"
+          data-type="{{ snap.type }}"
+          data-speed="{{ snap.speed }}"
+          data-distance="{{ snap.distance }}"
+          data-azimuth="{{ snap.azimuth }}"
+          data-elevation="{{ snap.elevation }}"
+          data-direction="{{ snap.direction }}"
+          data-motion-state="{{ snap.motion_state }}"
+          data-datetime="{{ snap.datetime }}"
+          data-filename="{{ snap.filename }}"
+          data-object-id="{{ snap.object_id or '' }}"
+          data-confidence="{{ snap.confidence or '' }}"
+          data-plate="{{ snap.plate or '' }}"
+          data-plate-image="{{ snap.plate_image or '' }}"
+          data-plate-conf="{{ snap.plate_conf or '' }}"
+          data-plate-crop="{{ snap.plate_crop or '' }}"
+          {% if snap.plate_crop %}data-plate-image="{{ url_for('serve_snapshot', filename=snap.plate_crop) }}"{% endif %}
+          data-snapshot-status="{{ snap.snapshot_status }}"
+          data-snapshot-type="{{ snap.snapshot_type }}"
+          data-reviewed="{{ snap.reviewed | string | lower }}"
+          data-flagged="{{ snap.flagged | string | lower }}"
+          data-clip-status="{{ snap.clip_status or '' }}"
+          data-clip-ready="{{ 'true' if snap.clip_ready else 'false' }}"
+          data-clip-url="{{ snap.clip_url or '' }}"
+          data-clip-gdrive-link="{{ snap.clip_gdrive_link or '' }}"
+          style="cursor:pointer;">
+          <img src="{{ _main_url }}" class="card-img-top"
+               alt="{{ snap.type }} Detection - {{ snap.datetime }}">
+          <div class="select-tick"><i class="fas fa-check"></i></div>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <h6 class="card-title">{{ snap.type|default("Unknown")|title }}</h6>
+        <small class="d-block">{{ snap.datetime }}</small>
+
+        {% if snap.snapshot_type or snap.snapshot_status %}
+        <div class="mt-1">
+            {% if snap.snapshot_type %}
+            <span class="badge bg-info text-dark me-1">{{ snap.snapshot_type|title }}</span>
+            {% endif %}
+            {% if snap.snapshot_status %}
+            <span class="badge bg-secondary">{{ snap.snapshot_status|title }}</span>
+            {% endif %}
+          {% endif %}
+        </div>
+        <div class="mt-2">
+          {% if snap.object_id %}
+          <small class="d-block">ID: {{ snap.object_id }}</small>
+          {# --- Plate line for vehicles --- #}
+          {% set _t = (snap.type or '')|lower %}
+          {% if snap.plate %}
+            <small class="d-block text-uppercase">
+              Plate: <strong>{{ snap.plate }}</strong>
+              {% if snap.plate_conf is not none %}
+                <span class="text-muted">({{ (snap.plate_conf*100)|round(0) }}%)</span>
+              {% endif %}
+              {% if snap.plate_crop %}
+              <img src="{{ url_for('serve_snapshot', filename=snap.plate_crop) }}"
+                  alt="Plate" class="plate-chip">
+              {% endif %}
+            </small>
+          {% endif %}
+          <small class="d-block">Speed: {{ snap.speed }} km/h · Dist: {{ snap.distance }} m</small>
+          <small class="d-block">
+            Dir: {{ snap.direction|default("N/A")|title }}
+            {% if snap.motion_state %} · Mot: {{ snap.motion_state|title }}{% endif %}
+          </small>
+          {% if snap.azimuth is not none and snap.elevation is not none %}
+          <small class="d-block">Az: {{ snap.azimuth }}°, El: {{ snap.elevation }}°</small>
+          {% endif %}
+          {% endif %}
+        </div>
+      </div>
+
+      {% if current_user.is_authenticated %}
+      <div class="mt-2 d-flex gap-1 px-2 pb-2" data-snapshot-controls="{{ snap.filename }}">
+        <button type="button"
+                class="btn btn-sm {{ 'btn-success' if snap.reviewed else 'btn-outline-primary' }} mark-reviewed-btn"
+                data-filename="{{ snap.filename }}"
+                data-current-state="{{ snap.reviewed|lower }}">
+          <span class="btn-text">{{ 'Unmark' if snap.reviewed else 'Mark Reviewed' }}</span>
+          <span class="loading-spinner d-none">
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+          </span>
+        </button>
+        <button type="button"
+                class="btn btn-sm {{ 'btn-danger' if snap.flagged else 'btn-outline-warning' }} mark-flagged-btn"
+                data-filename="{{ snap.filename }}"
+                data-current-state="{{ snap.flagged|lower }}">
+          <span class="btn-text">{{ 'Unflag' if snap.flagged else 'Flag' }}</span>
+          <span class="loading-spinner d-none">
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+          </span>
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Snapshot Count Info -->
+<div class="row mt-4">
+  <div class="col-12 text-center">
+    <p>
+      Showing {{ snapshots|length }} snapshots
+      {% if request.args.get('min_speed') or request.args.get('max_speed') or request.args.get('type') or request.args.get('direction') or request.args.get('reviewed_only') or request.args.get('flagged_only') %}
+        with applied filters
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+{% else %}
+
+<div class="card">
+  <div class="card-body text-center py-5">
+    <h5>No Images Found</h5>
+    <p>Try adjusting your filters or check back later for new detections.</p>
+    <a href="{{ url_for('gallery') }}" class="btn btn-primary">Clear All Filters</a>
+  </div>
+</div>
+
+{% endif %}
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Detection Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="row g-0">
+          <!-- Left: Image -->
+          <div class="col-md-8">
+            <img id="modalImage" src="" class="img-fluid w-100" alt="Detection Image">
+            <!-- Inline video player (src set dynamically in JS) -->
+            <video id="modalVideo" width="100%" height="auto" controls preload="metadata" playsinline muted style="display:none;">
+              <source id="modalVideoSource" src="" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+            <div id="modalVerifyPanel" class="p-3 d-none"></div>
+            <div id="modalMediaStrip" class="media-strip mt-2"></div>
+          </div>
+          <!-- Right: Data -->
+          <div class="col-md-4 p-3">
+            <h6 class="fw-bold mb-3">Detection Information</h6>
+            <div class="mb-2"><strong>Type:</strong> <span id="modalType"></span></div>
+            <div class="mb-2" id="modalPlateRow" style="display:none;">
+              <strong>Plate:</strong> <span id="modalPlate"></span>
+              <span class="text-muted" id="modalPlateConf"></span>
+            </div>
+            <div class="mb-3 d-none" id="meta-plate-img-wrap">
+              <img id="meta-plate-img"
+                  class="img-fluid rounded border"
+                  style="max-height: 140px; object-fit: contain; background:#000;"
+                  alt="Plate crop">
+              <div class="small text-muted mt-1" id="meta-plate">—</div>
+            </div>
+            <div class="mb-2"><strong>Speed:</strong> <span id="modalSpeed"></span> km/h</div>
+            <div class="mb-2"><strong>Distance:</strong> <span id="modalDistance"></span> m</div>
+            <div class="mb-2"><strong>Azimuth:</strong> <span id="modalAzimuth"></span>°</div>
+            <div class="mb-2"><strong>Elevation:</strong> <span id="modalElevation"></span>°</div>
+            <div class="mb-2"><strong>Direction:</strong> <span id="modalDirection"></span></div>
+            <div class="mb-2"><strong>Motion:</strong> <span id="modalMotion"></span></div>
+            <div class="mb-2"><strong>Time:</strong> <span id="modalDatetime"></span></div>
+            <div class="mb-2" id="modalObjectIdRow" style="display:none;">
+              <strong>Object ID:</strong> <span id="modalObjectId"></span>
+            </div>
+            <div class="mb-2" id="modalConfidenceRow" style="display:none;">
+              <strong>Confidence:</strong> <span id="modalConfidence"></span>%
+            </div>
+            <div class="mb-2" id="modalVerifyRow" style="display:none;">
+              <strong>Evidence:</strong>
+              <span id="modalVerifyStatus" class="badge verify-badge badge-unk">Checking…</span>
+              <a id="modalVerifyLink" class="ms-2 small" href="#" target="_blank" rel="noopener">Open verifier</a>
+            </div>
+            <div class="mb-2"><strong>Filename:</strong> <span id="modalFilename"></span></div>
+            <div class="mb-2"><strong>Snapshot Type:</strong> <span id="modalSnapshotType"></span></div>
+            <div class="mb-2"><strong>Status:</strong> <span id="modalStatus"></span></div>
+            <div class="mb-2"><strong>Reviewed:</strong> <span id="modalReviewed"></span></div>
+            <div class="mb-2"><strong>Flagged:</strong> <span id="modalFlagged"></span></div>
+            <div class="mb-2">
+              <strong>Clip:</strong>
+              <span id="modalClipStatus" class="badge text-bg-secondary">Pending</span>
+              <a id="modalClipDriveLink" class="ms-2 small" href="#" target="_blank" style="display:none;">Open in Drive</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-center align-items-center gap-2">
+        <a class="btn btn-outline-primary" id="modalDownload" href="#">Download</a>
+        <button type="button" class="btn btn-outline-danger" id="deleteBtn">Delete</button>
+        <button type="button" class="btn btn-outline-success" id="playClipBtn" disabled>Play video</button>
+        <button type="button" class="btn btn-outline-warning" id="uploadDriveBtn" disabled>Upload to Drive</button>
+        <button type="button" class="btn btn-outline-info" id="verifyBtn" disabled>Verify</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Download Confirmation Modal -->
+<div class="modal fade" id="downloadConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Download</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to download a ZIP file containing <strong id="download-count"></strong> images?</p>
+        <p class="text-muted">This may take some time depending on the number of images.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="confirmDownloadBtn">
+          <span class="btn-text">Yes, Download</span>
+          <span class="loading-spinner d-none">
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Preparing...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.startPlaylistFor = window.startPlaylistFor || function(basename, fromUrl){
+  // Defer until real implementation is exported by DOMContentLoaded
+  console.warn('Playlist not ready yet; deferring…');
+  window.__deferredPlaylist = [basename, fromUrl];
+};
+// Open modal with requested media (image/video) 
+function openInModal(kind, url, title, parentBasename) {
+  const img = document.getElementById('modalImage');
+  const vid = document.getElementById('modalVideo');
+  const src = document.getElementById('modalVideoSource');
+  const dlClip = document.getElementById('modalVideoDownload'); // small link under player
+  document.getElementById('modalTitle').textContent = title || 'Detection Details';
+
+  // If a raw /clips URL is passed from a legacy thumb, normalize to bundle endpoint
+  try {
+    if (kind === 'video' && /^\/clips\//.test(url)) {
+      const snap = (parentBasename || (document.getElementById('modalFilename')?.textContent || '')).trim();
+      const fname = url.split('/').pop();
+      if (snap && fname) url = `/bundle/asset?snapshot=${encodeURIComponent(snap)}&name=${encodeURIComponent(fname)}`;
+    }
+  } catch(_) {}
+
+  if (kind === 'video') {
+    if (img) img.style.display = 'none';
+    if (vid) {
+      vid.style.display = '';
+      // Wake caches/proxies with a HEAD preflight
+      (async () => { try { await fetch(url, { method: 'HEAD', cache: 'no-store' }); } catch (_) {} })();
+      const bust = url + (url.includes('?') ? '&' : '?') + 'ts=' + Date.now();
+      // Set on <source> and <video>, then wait for 'canplay' instead of 'loadeddata'
+      if (src) {
+        src.type = 'video/mp4'; // browsers infer codecs from container
+        src.src  = bust;
+      }
+      vid.src = bust;
+      vid.oncanplay = () => { vid.play().catch(()=>{}); };
+      vid.load();
+    }
+    if (dlClip) { dlClip.href = url; dlClip.setAttribute('download', 'clip.mp4'); dlClip.classList.remove('d-none'); }
+  } else {
+    if (vid) { try { vid.pause(); } catch(_){} vid.style.display = 'none'; }
+    if (img) { img.style.display = ''; img.src = url; }
+    if (dlClip) { dlClip.href = url; dlClip.setAttribute('download', 'image.jpg'); dlClip.classList.remove('d-none'); }
+  }
+  const modalEl = document.getElementById('imageModal');
+  const modal = bootstrap?.Modal?.getOrCreateInstance(modalEl, { backdrop: true, focus: true });
+  modal.show();
+  const vbtn = document.getElementById('verifyBtn');
+  const vpanel = document.getElementById('modalVerifyPanel');
+  if (vpanel) { vpanel.classList.add('d-none'); vpanel.innerHTML = ''; }
+  // Reuse the img/vid consts declared at the top of this function
+  const strip = document.getElementById('modalMediaStrip');
+  if (img)  img.style.display  = (kind === 'video') ? 'none' : 'block';
+  if (vid)  vid.style.display  = (kind === 'video') ? 'block' : 'none';
+  if (strip) strip.style.display = '';
+  if (vbtn) { vbtn.disabled = false; vbtn.textContent = 'Verify'; vbtn.dataset.state = 'media'; }
+
+}
+// Thumbnail clicks (bundle media strip)
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('.media-thumb');
+  if (!a) return;
+  e.preventDefault(); e.stopPropagation();
+  const kind   = a.getAttribute('data-kind');
+  const url    = a.getAttribute('href');
+  const parent = a.getAttribute('data-parent') || '';
+  if (kind === 'video') {
+    // Start playlist from the clicked clip
+    startPlaylistFor(parent, url);
+  } else {
+    openInModal(kind, url, `Bundle Media — ${parent}`, parent);
+  }
+});
+// Card-level "Play" button — play ALL clips in the bundle
+document.querySelectorAll('.play-bundle-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const basename = btn.dataset.filename;
+    // Build playlist from the manifest and start from the first clip
+    await startPlaylistFor(basename, null);
+  });
+});
+// Upload bundle to Drive
+document.querySelectorAll('.upload-bundle-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const filename = btn.dataset.filename;
+    btn.disabled = true;
+    try {
+      const r = await fetch('/api/bundle_upload', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ snapshot: filename })
+      });
+      const j = await r.json();
+      if (j && j.gdrive_link) {
+        alert('Uploaded. Link: ' + j.gdrive_link);
+      } else if (j && j.status === 'ok') {
+        alert('Uploaded. (No link returned — check Drive)');
+      } else {
+        alert('Upload failed: ' + (j && j.error ? j.error : 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Upload error: ' + err);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+});
+</script>
+<script>
+  (function(){
+    const verifyBtn = document.getElementById('verifyBtn');
+    if (!verifyBtn) return;
+
+    async function getSealIdForSnapshot(basename){
+      try{
+        const r = await fetch(`/bundle/asset?snapshot=${encodeURIComponent(basename)}&name=seal.json`,
+                              { headers:{'Cache-Control':'no-cache'} });
+        if(!r.ok) return null;
+        const j = await r.json();
+        return j?.payload?.seal_id || null;
+      }catch(_){ return null; }
+    }
+
+    async function showVerificationInModal(){
+      const fname = (window.currentImageData && window.currentImageData.filename) || '';
+      if (!fname) return;
+      verifyBtn.disabled = true;
+      try{
+        const sealId = await getSealIdForSnapshot(fname);
+        if (!sealId) throw new Error('No evidence seal found.');
+        const resp = await fetch(`/verify/${encodeURIComponent(sealId)}?json=1&details=1`, { headers:{'Accept':'application/json'} });
+        let data = null;
+        try { data = await resp.json(); } catch(_){}
+        if (!resp.ok && data && (data.status || data.reason)) {
+          // treat as a valid tamper result
+        } else if (!resp.ok) {
+          throw new Error((data && data.error) ? data.error : 'Verification request failed.');
+        }
+
+        try {
+          const hasFiles =
+            (data?.details?.files && Object.keys(data.details.files).length) ||
+            (data?.details?.payload?.files && Object.keys(data.details.payload.files).length) ||
+            (data?.payload?.files && Object.keys(data.payload.files).length) ||
+            (Array.isArray(data?.files) && data.files.length);
+          if (!hasFiles) {
+            const sr = await fetch(`/bundle/asset?snapshot=${encodeURIComponent(fname)}&name=seal.json`,
+                                   { headers:{'Cache-Control':'no-cache'} });
+            if (sr.ok) {
+              const sj = await sr.json();
+              const payload = sj?.payload || sj || {};
+              data.details = data.details || {};
+              data.details.payload = data.details.payload || {};
+              if (payload.files) data.details.payload.files = payload.files;  // expected hashes
+              if (payload.seal_id && !data.seal_id) data.seal_id = payload.seal_id;
+              if (payload.site) data.details.payload.site = data.details.payload.site || payload.site;
+              if (payload.created_at) data.details.payload.created_at = data.details.payload.created_at || payload.created_at;
+            }
+          }
+        } catch(_) {}
+
+        try {
+          const expectedMap =
+            (data?.details?.files) ||
+            (data?.details?.payload?.files) ||
+            (data?.payload?.files) || {};
+          const recomputedMap =
+            (data?.details?.recomputed) ||
+            (data?.recomputed) || {};
+          const verdict = String(data?.status || '').toLowerCase();
+          if (verdict === 'tampered' && !data.reason) {
+            // First: detect obviously missing files via cheap HEAD requests.
+            const missing = [];
+            for (const name of Object.keys(expectedMap)) {
+              const url = `/bundle/asset?snapshot=${encodeURIComponent(fname)}&name=${encodeURIComponent(name)}`;
+              try {
+                const hr = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+                if (!hr.ok) missing.push(name);
+              } catch { missing.push(name); }
+            }
+            if (missing.length) {
+              data.reason = 'missing: ' + missing.join(', ');
+            } else {
+              // If recomputed hashes are present, highlight mismatches.
+              const mism = Object.keys(expectedMap).filter(
+                n => expectedMap[n] && recomputedMap[n] && expectedMap[n] !== recomputedMap[n]
+              );
+              if (mism.length) data.reason = 'hash mismatch: ' + mism.join(', ');
+            }
+          }
+        } catch {}
+
+        // Hide media (image/video + strip), show panel
+        const img   = document.getElementById('modalImage');
+        const vid   = document.getElementById('modalVideo');
+        const strip = document.getElementById('modalMediaStrip');
+        const panel = document.getElementById('modalVerifyPanel');
+        if (img)   img.style.display = 'none';
+        if (vid) { try { vid.pause(); } catch(_){} vid.style.display = 'none'; }
+        if (strip) strip.style.display = 'none';
+        if (panel) {
+          panel.innerHTML = window.renderVerifyDetailsInline ? window.renderVerifyDetailsInline(data)
+                                                             : '<div class="text-danger">Verifier renderer missing.</div>';
+          panel.classList.remove('d-none');
+        }
+        // Toggle button text/state
+        verifyBtn.textContent = 'Back to Media';
+        verifyBtn.dataset.state = 'verify';
+      } catch(e){
+        alert(e.message || 'Verification failed.');
+      } finally {
+        verifyBtn.disabled = false;
+      }
+    }
+
+    function showMediaInModal(){
+      const img   = document.getElementById('modalImage');
+      const vid   = document.getElementById('modalVideo');
+      const strip = document.getElementById('modalMediaStrip');
+      const panel = document.getElementById('modalVerifyPanel');
+      if (panel) { panel.classList.add('d-none'); panel.innerHTML = ''; }
+      if (img)   img.style.display = 'block';
+      if (vid)   vid.style.display = 'none';
+      if (strip) strip.style.display = '';
+      verifyBtn.textContent = 'Verify';
+      verifyBtn.dataset.state = 'media';
+    }
+
+    // Click handler toggles between media and verification
+    verifyBtn.addEventListener('click', async () => {
+      const state = verifyBtn.dataset.state || 'media';
+      if (state === 'media') {
+        await showVerificationInModal();
+      } else {
+        showMediaInModal();
+      }
+    });
+  })();
+
+document.addEventListener('DOMContentLoaded', function() {
+  function ensureSingleModal(id) {
+    const nodes = document.querySelectorAll('#' + id);
+    nodes.forEach((el, idx) => { if (idx > 0) el.remove(); });
+    return document.getElementById(id);
+  }
+
+  // Global modal/backdrop clean-up to avoid "screen freeze"
+  window.cleanupModals = function() {
+    try {
+      // Hide any open Bootstrap modals safely
+      document.querySelectorAll('.modal.show').forEach(el => {
+        try {
+          if (window.bootstrap?.Modal?.getInstance) {
+            const inst = bootstrap.Modal.getInstance(el);
+            inst?.hide();
+          }
+        } catch(_) {}
+        el.classList.remove('show');
+        el.style.removeProperty('display');
+        el.setAttribute('aria-hidden', 'true');
+      });
+      // Remove stuck backdrops and reset body scroll lock
+      document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('padding-right');
+    } catch(_) {}
+  };
+
+  // pre-dedupe on load
+  ensureSingleModal('imageModal');
+  ensureSingleModal('downloadConfirmModal');
+  // also ensure no stale backdrops on first load
+  window.cleanupModals();
+
+  // Filters toggle (persist state unless filters are actively applied)
+  (function(){
+    const collapseEl = document.getElementById('filterCollapse');
+    const toggleBtn  = document.getElementById('filtersToggleBtn');
+    if (!collapseEl || !toggleBtn || typeof bootstrap === 'undefined') return;
+    const hasFilters = {{ 'true' if has_filters else 'false' }};
+    const collapse   = new bootstrap.Collapse(collapseEl, { toggle: false });
+    if (!hasFilters) {
+      const saved = localStorage.getItem('galleryFiltersOpen');
+      if (saved === 'true') { collapse.show(); } else { collapse.hide(); }
+    }
+    const updateBtnText = () => {
+      const open = collapseEl.classList.contains('show');
+      toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      const txt = toggleBtn.querySelector('.toggle-text');
+      if (txt) txt.textContent = open ? 'Hide Filters' : 'Show Filters';
+    };
+    collapseEl.addEventListener('shown.bs.collapse', () => {
+      localStorage.setItem('galleryFiltersOpen', 'true'); updateBtnText();
+    });
+    collapseEl.addEventListener('hidden.bs.collapse', () => {
+      localStorage.setItem('galleryFiltersOpen', 'false'); updateBtnText();
+    });
+    updateBtnText();
+  })();
+  // Reset player cleanly on modal close
+(function(){
+    const modalEl = document.getElementById('imageModal');
+    if (!modalEl) return;
+    modalEl.addEventListener('hidden.bs.modal', function () {
+      const v = document.getElementById('modalVideo');
+      const s = document.getElementById('modalVideoSource');
+      const imgEl = document.getElementById('modalImage');
+      if (imgEl && imgEl.dataset.orig) { imgEl.src = imgEl.dataset.orig; }
+      if (v) {
+        try { v.pause(); } catch(_) {}
+        v.style.display = 'none';
+        v.removeAttribute('src');
+        if (s) s.removeAttribute('src');
+        try { v.load(); } catch(_) {}
+      }
+      if (imgEl) imgEl.style.display = 'block';
+      const vpanel = document.getElementById('modalVerifyPanel');
+      const vbtn   = document.getElementById('verifyBtn');
+      const strip  = document.getElementById('modalMediaStrip');
+      if (vpanel) { vpanel.classList.add('d-none'); vpanel.innerHTML=''; }
+      if (strip) strip.style.display = '';
+      if (vbtn) { vbtn.textContent='Verify'; vbtn.dataset.state='media'; vbtn.disabled = false; }
+
+      // make absolutely sure the page is unfrozen
+      window.cleanupModals();
+    });
+  })();
+  let currentImageData = null;
+
+  // Open modal on image click
+  document.querySelectorAll('.gallery-image-container').forEach(container => {
+    container.addEventListener('click', function(e) {
+      e.preventDefault();
+      openImageModal(this);
+    });
+  });
+
+  // Mark buttons (delegated)
+  document.addEventListener('click', function(e) {
+    const btnReviewed = e.target.closest('.mark-reviewed-btn');
+    const btnFlagged  = e.target.closest('.mark-flagged-btn');
+    if (!btnReviewed && !btnFlagged) return;
+
+    e.preventDefault();
+    e.stopPropagation(); // don’t trigger image click
+
+    const button = btnReviewed || btnFlagged;
+    const action = btnReviewed ? 'reviewed' : 'flagged';
+    handleMarkAction(button, action);
+  });
+
+  const HAS_FILTERS   = {{ 'true' if has_filters else 'false' }};
+  const selectedInput = document.getElementById('selectedInput');
+  const selectedBadge = document.getElementById('selectedCountBadge');
+  const selectedFilter= document.getElementById('selected_filter');
+  const initialSel    = (new URL(window.location)).searchParams.get('selected') || '';
+  const selectedSet   = new Set(initialSel.split(',').filter(Boolean));
+
+  function updateSelectedUI() {
+    selectedInput.value = Array.from(selectedSet).join(',');
+    if (selectedBadge) selectedBadge.textContent = `${selectedSet.size} selected`;
+    document.querySelectorAll('.gallery-card').forEach(card => {
+      const container = card.querySelector('.gallery-image-container');
+      const fname = container?.dataset.filename || container?.dataset.image?.split('/').pop();
+      const on = !!(fname && selectedSet.has(fname));
+      card.classList.toggle('selected', on);
+      const cb = card.querySelector('.select-checkbox');
+      if (cb) cb.checked = on;
+    });
+  }
+  updateSelectedUI();
+
+  document.querySelectorAll('.select-checkbox').forEach(cb => {
+    cb.addEventListener('click', e => e.stopPropagation());
+    cb.addEventListener('change', e => {
+      const fname = cb.dataset.filename;
+      if (!fname) return;
+      if (cb.checked) selectedSet.add(fname); else selectedSet.delete(fname);
+      updateSelectedUI();
+    });
+  });
+
+  const $ = id => document.getElementById(id);
+  const setText = (id, v) => { const el = $(id); if (el) el.textContent = v ?? ''; };
+  const showRow = (id, show) => { const el = $(id); if (el) el.style.display = show ? '' : 'none'; };
+
+  function openImageModal(card) {
+    const data = card.dataset;
+
+    currentImageData = {
+      title:      data.title || 'Detection Details',
+      image:      data.image,
+      type:       data.type || 'N/A',
+      speed:      data.speed || '0',
+      distance:   data.distance || '0',
+      azimuth:    data.azimuth || '0',
+      elevation:  data.elevation || '0',
+      direction:  data.direction || '',
+      motion:     data.motionState || '',
+      datetime:   data.datetime || '',
+      filename:   data.filename || '',
+      snapshotType: data.snapshotType || '',
+      snapshotStatus: data.snapshotStatus || '',
+      reviewed:   data.reviewed === 'true',
+      flagged:    data.flagged === 'true',
+      objectId:   data.objectId || '',
+      confidence: data.confidence || '',
+      plate:      data.plate || '',
+      plateConf:  data.plateConf || '',
+      plateImage: data.plateImage || ''
+    };
+    window.currentImageData = currentImageData;
+    (function(){
+      const row  = document.getElementById('modalVerifyRow');
+      const link = document.getElementById('modalVerifyLink');
+      const stat = document.getElementById('modalVerifyStatus');
+      if (row) row.style.display = 'none';
+      if (stat) { stat.textContent = 'Checking…'; stat.className = 'badge verify-badge badge-unk'; }
+      if (link) link.removeAttribute('href');
+    })();
+
+    // Title + main image
+    setText('modalTitle', currentImageData.title);
+    const img = $('modalImage');
+    if (img) {
+      img.src = currentImageData.image;
+      img.dataset.orig = currentImageData.image;
+      img.style.display = 'block';
+    }
+    const vid = $('modalVideo'); if (vid) vid.style.display = 'none';
+
+    // Basic fields
+    setText('modalType', currentImageData.type);
+    setText('modalSpeed', currentImageData.speed);
+    setText('modalDistance', currentImageData.distance);
+
+    // Plate row (text)
+    const isVehicle = ['vehicle','car','truck','bus','bike','bicycle']
+                        .includes((currentImageData.type || '').toLowerCase());
+    if (isVehicle && currentImageData.plate) {
+      setText('modalPlate', currentImageData.plate);
+      if (currentImageData.plateConf !== "" && !isNaN(parseFloat(currentImageData.plateConf))) {
+        setText('modalPlateConf', ` (${Math.round(parseFloat(currentImageData.plateConf) * 100)}%)`);
+        const pc = $('modalPlateConf'); if (pc) pc.style.display = 'inline';
+      } else {
+        setText('modalPlateConf','');
+        const pc = $('modalPlateConf'); if (pc) pc.style.display = 'none';
+      }
+      showRow('modalPlateRow', true);
+    } else {
+      setText('modalPlate',''); setText('modalPlateConf','');
+      showRow('modalPlateRow', false);
+    }
+
+    // Right-side "always show" crop
+    const metaWrap = $('meta-plate-img-wrap');
+    const metaImg  = $('meta-plate-img');
+    const metaTxt  = $('meta-plate');
+    if (metaTxt) metaTxt.textContent = currentImageData.plate || '—';
+    if (metaImg && metaWrap && currentImageData.plateImage) {
+      metaImg.src = currentImageData.plateImage;     // absolute /snapshots/... URL
+      metaWrap.classList.remove('d-none');
+      metaImg.onclick = null;                         // strictly a small preview on the right
+    } else if (metaImg && metaWrap) {
+      metaImg.removeAttribute('src');
+      metaWrap.classList.add('d-none');
+    }
+
+    // The rest
+    setText('modalAzimuth',   currentImageData.azimuth);
+    setText('modalElevation', currentImageData.elevation);
+    setText('modalDirection', (currentImageData.direction || '').toString());
+    setText('modalMotion',    (currentImageData.motion || '').toString());
+    setText('modalDatetime',  currentImageData.datetime || 'N/A');
+    setText('modalFilename',  currentImageData.filename || 'N/A');
+    setText('modalSnapshotType', currentImageData.snapshotType);
+    setText('modalStatus',    currentImageData.snapshotStatus);
+    setText('modalReviewed',  currentImageData.reviewed ? 'Yes' : 'No');
+    setText('modalFlagged',   currentImageData.flagged  ? 'Yes' : 'No');
+
+    // Clean up any stale backdrops first
+    window.cleanupModals();
+
+    const modalEl = document.getElementById('imageModal');
+    if (!modalEl) return;
+
+    if (window.bootstrap && bootstrap.Modal && bootstrap.Modal.getOrCreateInstance) {
+      const m = bootstrap.Modal.getOrCreateInstance(modalEl, { backdrop: true, focus: true });
+      m.show();
+    } else {
+      // Fallback: still show modal without Bootstrap JS to avoid a dead click
+      modalEl.style.display = 'block';
+      modalEl.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+
+    (function(){
+      const vpanel = document.getElementById('modalVerifyPanel');
+      const vbtn   = document.getElementById('verifyBtn');
+      const img    = document.getElementById('modalImage');
+      const vid    = document.getElementById('modalVideo');
+      const strip  = document.getElementById('modalMediaStrip');
+      if (vpanel) { vpanel.classList.add('d-none'); vpanel.innerHTML=''; }
+      if (img) img.style.display = 'block';
+      if (vid) vid.style.display = 'none';
+      if (strip) strip.style.display = '';
+      if (vbtn) { vbtn.disabled = false; vbtn.textContent='Verify'; vbtn.dataset.state='media'; }
+    })();
+
+    setText('modalAzimuth',   currentImageData.azimuth   ?? '0');
+    setText('modalElevation', currentImageData.elevation ?? '0');
+    setText('modalDirection', formatText(currentImageData.direction));
+    setText('modalMotion',    formatText(currentImageData.motion));
+    setText('modalDatetime',  currentImageData.datetime || 'N/A');
+    setText('modalFilename',  currentImageData.filename || 'N/A');
+    setText('modalSnapshotType', formatText(currentImageData.snapshotType));
+    setText('modalStatus',    formatText(currentImageData.snapshotStatus));
+    setText('modalReviewed',  currentImageData.reviewed ? 'Yes' : 'No');
+    setText('modalFlagged',   currentImageData.flagged  ? 'Yes' : 'No');
+
+    if (currentImageData.objectId) {
+      setText('modalObjectId', currentImageData.objectId);
+      showRow('modalObjectIdRow', true);
+    } else { showRow('modalObjectIdRow', false); }
+
+    if (currentImageData.confidence !== undefined && currentImageData.confidence !== "") {
+      const pct = Math.round(parseFloat(currentImageData.confidence) * 100);
+      setText('modalConfidence', isFinite(pct) ? pct : '');
+      showRow('modalConfidenceRow', true);
+    } else { showRow('modalConfidenceRow', false); }
+
+    (async ()=>{
+      try{
+        const sealId = card.getAttribute('data-seal-id');
+        const row  = document.getElementById('modalVerifyRow');
+        const link = document.getElementById('modalVerifyLink');
+        const stat = document.getElementById('modalVerifyStatus');
+        if (!sealId || !row || !link || !stat) return;
+        row.style.display = '';
+        link.href = `/verify/${encodeURIComponent(sealId)}`;
+        // ask verifier for JSON verdict (no new API; this is your /verify route with ?json=1)
+        const r = await fetch(`/verify/${encodeURIComponent(sealId)}?json=1`, { headers:{'Accept':'application/json'} });
+        let j = null; try { j = await r.json(); } catch(_){ j = null; }
+        const ok = (j && j.status === 'verified');
+        stat.textContent = ok ? '✓ Verified' : '✗ Tampered';
+        stat.className = `badge verify-badge ${ok ? 'badge-ok' : 'badge-bad'}`;
+      }catch(_){ /* silently ignore */ }
+    })();
+
+    setupDownloadButton();
+    setupDeleteButton();
+    loadBundleIntoModal(currentImageData.filename);
+
+    // ── Clip wiring (status badge + Play when ready) ─────────────────────────
+    const clipStatusEl = document.getElementById('modalClipStatus');
+    const clipDriveEl  = document.getElementById('modalClipDriveLink');
+    const playBtn      = document.getElementById('playClipBtn');
+    const videoEl      = document.getElementById('modalVideo');
+    const sourceEl     = document.getElementById('modalVideoSource');
+    const dlEl         = document.getElementById('modalVideoDownload');
+    const imgEl        = document.getElementById('modalImage');
+    const uploadBtn    = document.getElementById('uploadDriveBtn');
+
+    // Defaults
+    playBtn.disabled = true;
+    videoEl.style.display = 'none';
+    imgEl.style.display = 'block';
+    clipDriveEl.style.display = 'none';
+    uploadBtn.disabled = true;
+    uploadBtn.onclick = null;
+    if (dlEl) { dlEl.classList.add('d-none'); dlEl.removeAttribute('href'); }
+
+    // If Drive link present in dataset, expose it
+    const dsDrive = card.dataset.clipGdriveLink || '';
+    if (dsDrive) {
+      clipDriveEl.href = dsDrive;
+      clipDriveEl.style.display = 'inline';
+    } else {
+      clipDriveEl.removeAttribute('href');
+      clipDriveEl.style.display = 'none';
+    }
+
+    const setClipBadge = (state) => {
+      const map = {
+        ready:  {text:'Ready',   cls:'badge text-bg-success'},
+        pending:{text:'Pending', cls:'badge text-bg-warning'},
+        failed: {text:'Failed',  cls:'badge text-bg-danger'},
+        missing:{text:'Missing', cls:'badge text-bg-secondary'}
+      };
+      const m = map[(state||'').toLowerCase()] || map.missing;
+      clipStatusEl.textContent = m.text;
+      clipStatusEl.className = m.cls;
+    };
+
+    const dsReady = (card.dataset.clipReady === 'true');
+    const dsUrl   = card.dataset.clipUrl || '';
+    const dsStat  = (card.dataset.clipStatus || (dsReady ? 'ready' : 'pending'));
+    setClipBadge(dsStat);
+
+    async function doUpload(snapshotBasename){
+      try{
+        uploadBtn.disabled = true;
+        const r = await fetch('/api/clip_upload', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ snapshot: snapshotBasename })
+        });
+        const j = await r.json();
+        if(!r.ok){ throw new Error(j.error || r.statusText); }
+        if (j.gdrive_link){
+          clipDriveEl.href = j.gdrive_link;
+          clipDriveEl.style.display = 'inline';
+          showAlert('Uploaded to Google Drive.', 'success');
+        } else {
+          showAlert('Uploaded, but no share link available.', 'warning');
+        }
+      } catch(e){
+        showAlert('Drive upload failed: ' + e.message, 'danger');
+      } finally {
+        // keep disabled unless another action is needed
+        uploadBtn.disabled = true;
+      }
+    }
+
+    function showVideo(url) {
+      imgEl.style.display = 'none';
+      videoEl.style.display = 'block';
+      // reset previous
+      videoEl.pause();
+      videoEl.removeAttribute('src');
+      if (sourceEl) sourceEl.removeAttribute('src');
+      videoEl.load();
+
+      // Warm up: some browsers issue a HEAD first; doing it ourselves helps caches/proxies.
+      (async () => { try { await fetch(url, { method: 'HEAD', cache: 'no-store' }); } catch (_) {} })();
+
+      // Normalize to Range-capable endpoint if a raw /clips/ URL sneaks in
+      try {
+        if (/^\/clips\//.test(url) && currentImageData?.filename) {
+          const fname = url.split('/').pop();
+          if (fname) {
+            url = `/bundle/asset?snapshot=${encodeURIComponent(currentImageData.filename)}&name=${encodeURIComponent(fname)}`;
+          }
+        }
+      } catch(_) {}
+
+      // cache-bust
+      const bust = url + (url.includes('?') ? '&' : '?') + 'ts=' + Date.now();
+
+      // Be explicit about codecs and set URL on BOTH <source> and <video>
+      if (sourceEl) {
+        sourceEl.type = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"';
+        sourceEl.src  = bust;
+      }
+      videoEl.src = bust;
+
+      // Prepare clip download and make it visible when video loads
+      if (dlEl) {
+        dlEl.href = bust;
+        dlEl.setAttribute('download', ((currentImageData?.filename) || 'clip') + '.mp4');
+        dlEl.classList.remove('d-none');
+      }
+
+      // Prefer onloadeddata (fires later than metadata on some engines)
+      videoEl.onloadeddata = () => {
+        videoEl.play().catch(()=>{ /* user gesture may be required */ });
+        if (dlEl) dlEl.classList.remove('d-none');
+      };
+      videoEl.onerror = () => {
+        if (dlEl) dlEl.classList.remove('d-none');
+      };
+      videoEl.load();
+    }
+
+    async function pollClipStatus(snapshotBasename, onUpdate) {
+      try {
+        let tries = 0, delay = 900, maxTries = 20;
+        while (tries < maxTries) {
+          const r = await fetch(`/api/clip_status?snapshot=${encodeURIComponent(snapshotBasename)}`,
+                                { headers: {'Cache-Control':'no-cache'} });
+          if (r.ok) {
+            const j = await r.json();
+            onUpdate && onUpdate(j);
+            if (j.status === 'ready' || j.status === 'failed' || j.status === 'missing') break;
+          }
+          await new Promise(res => setTimeout(res, delay));
+          delay = Math.min(Math.round(delay * 1.5), 5000);
+          tries++;
+        }
+      } catch (_) { /* noop */ }
+    }
+
+    if (dsReady && dsUrl) {
+      playBtn.disabled = false;
+      playBtn.onclick = () => showVideo(dsUrl);
+      if (!dsDrive) {
+        uploadBtn.disabled = false;
+        uploadBtn.onclick = () => doUpload(currentImageData.filename);
+      }
+    } else {
+      // Poll lightweight status API until ready/failed
+      pollClipStatus(currentImageData.filename, (p) => {
+        setClipBadge(p.status || 'missing');
+        if (p.gdrive_link){
+          clipDriveEl.href = p.gdrive_link;
+          clipDriveEl.style.display = 'inline';
+        }
+        if (p.status === 'ready' && p.clip_url) {
+          playBtn.disabled = false;
+          playBtn.onclick = () => showVideo(p.clip_url);
+          if (!p.gdrive_link){
+            uploadBtn.disabled = false;
+            uploadBtn.onclick = () => doUpload(currentImageData.filename);
+          } else {
+            uploadBtn.disabled = true;
+          }
+        }
+      });
+    }
+  }
+
+    async function loadBundleIntoModal(filename){
+      try {
+        const r = await fetch(`/api/bundle_manifest?snapshot=${encodeURIComponent(filename)}`,
+                              { headers: {'Cache-Control':'no-cache'} });
+        if (!r.ok) return;  // gracefully skip
+        const man = await r.json();
+        renderModalMediaStrip(man, filename);
+
+        // If a physical bundle dir exists, override "Upload to Drive" to upload the WHOLE BUNDLE
+        if (man && man.dir) {
+          const uploadBtn = document.getElementById('uploadDriveBtn');
+          const clipDriveEl = document.getElementById('modalClipDriveLink');
+          if (!uploadBtn) return;
+          uploadBtn.disabled = false;
+          uploadBtn.onclick = async () => {
+            try {
+              uploadBtn.disabled = true;
+              const ur = await fetch('/api/bundle_upload', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ snapshot: filename })
+              });
+              const uj = await ur.json();
+              if (!ur.ok) throw new Error(uj.error || ur.statusText);
+              if (uj.gdrive_link) {
+                clipDriveEl.href = uj.gdrive_link;
+                clipDriveEl.style.display = 'inline';
+                showAlert('Bundle uploaded to Google Drive.', 'success');
+              } else {
+                showAlert('Bundle uploaded (no share link returned).', 'warning');
+              }
+            } catch (e) {
+              showAlert('Bundle upload failed: ' + e.message, 'danger');
+            } finally {
+              uploadBtn.disabled = false;
+            }
+          };
+        }
+      } catch (_) { /* no-op */ }
+    }
+
+    function renderModalMediaStrip(manifest, snapshotBasename){
+      const wrap = document.getElementById('modalMediaStrip');
+      if (!wrap) return;
+      wrap.innerHTML = '';
+      const items = [];
+      // Merge known lists; also accept legacy `media` list as fallback
+      (manifest.images || []).forEach(img => items.push({kind:'image', name:img.name, url:img.url}));
+      (manifest.videos || []).forEach(vid => items.push({kind:'video', name:vid.name, url:vid.url}));
+      if ((!manifest.videos || !manifest.videos.length) && Array.isArray(manifest.media)) {
+        manifest.media.forEach(m => {
+          if (m && m.url && (m.type === 'image' || m.type === 'video')) items.push({kind:m.type, name:m.name, url:m.url});
+        });
+      }
+      if (items.length === 0) { wrap.innerHTML = '<small class="text-muted">No extra media in bundle.</small>'; return; }
+      for (const it of items){
+        const a = document.createElement('a');
+        a.href = it.url;
+        a.className = 'media-thumb';
+        a.dataset.kind = it.kind;
+        a.dataset.parent = snapshotBasename;
+        if (it.kind === 'image') {
+          const img = document.createElement('img');
+          img.alt = it.name;
+          img.loading = 'lazy';
+          img.src = it.url;
+          a.appendChild(img);
+        } else {
+          const v = document.createElement('video');
+          v.muted = true;
+          v.playsInline = true;
+          v.preload = 'none';
+          a.appendChild(v);
+          const badge = document.createElement('div');
+          badge.className = 'play-badge';
+          badge.textContent = '▶';
+          a.appendChild(badge);
+        }
+        wrap.appendChild(a);
+      }
+    }
+
+  function formatText(t) { return t ? (t.charAt(0).toUpperCase() + t.slice(1)) : 'N/A'; }
+
+  function setupDownloadButton() {
+    // Support either modal variant (#modalDownload or #downloadBtn)
+    const downloadBtn = document.getElementById('modalDownload') || document.getElementById('downloadBtn');
+    if (!downloadBtn) return;
+    downloadBtn.onclick = function(e) {
+      e.preventDefault();
+      if (!currentImageData || !currentImageData.filename) return;
+      // Use the server bundle that can include PDF + JSON + MP4 when available
+      const url = `/download_detection_bundle/${encodeURIComponent(currentImageData.filename)}`;
+      // Navigate (lets the browser handle the file download)
+      window.location.href = url;
+    };
+  }
+
+  function setupDeleteButton() {
+    const deleteBtn = document.getElementById('deleteBtn');
+    if (!deleteBtn) return;
+    deleteBtn.onclick = function() {
+      if (!confirm(`Delete snapshot "${currentImageData.filename}"?`)) return;
+      fetch(`/delete_snapshot/${currentImageData.filename}`, { method: "DELETE" })
+        .then(res => res.json())
+        .then(resp => {
+          if (resp.success) { location.reload(); }
+          else { alert("Delete failed: " + resp.error); }
+        })
+        .catch(() => alert("Delete failed"));
+    };
+  }
+
+  async function handleMarkAction(button, action) {
+    if (button.disabled) return;
+    const filename = button.dataset.filename;
+    const currentState = (button.dataset.currentState === 'true');
+
+    showButtonLoading(button);
+    try {
+      const response = await fetch('/mark_snapshot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ snapshot: filename, action: action })
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+
+      if (data.status === 'updated') {
+        updateButton(button, action, !currentState);
+        showAlert(`Snapshot ${currentState ? 'un' : ''}${action} successfully`, 'success');
+
+        // keep dataset in sync for modal
+        const col = button.closest('[data-snapshot]');
+        const container = col?.querySelector('.gallery-image-container');
+        if (container) {
+          if (action === 'reviewed') container.dataset.reviewed = (!currentState).toString();
+          if (action === 'flagged')  container.dataset.flagged  = (!currentState).toString();
+        }
+      } else {
+        throw new Error(data.message || 'Update failed');
+      }
+    } catch (err) {
+      console.error(err);
+      showAlert(`Failed to update snapshot: ${err.message}`, 'danger');
+    } finally {
+      hideButtonLoading(button);
+    }
+  }
+
+  function updateButton(button, action, newState) {
+    const textSpan = button.querySelector('.btn-text');
+    if (action === 'reviewed') {
+      button.className = newState ? 'btn btn-sm btn-success mark-reviewed-btn' : 'btn btn-sm btn-outline-primary mark-reviewed-btn';
+      textSpan.textContent = newState ? 'Unmark' : 'Mark Reviewed';
+    } else {
+      button.className = newState ? 'btn btn-sm btn-danger mark-flagged-btn' : 'btn btn-sm btn-outline-warning mark-flagged-btn';
+      textSpan.textContent = newState ? 'Unflag' : 'Flag';
+    }
+    button.dataset.currentState = newState.toString();
+  }
+
+  function showButtonLoading(button) {
+    button.querySelector('.btn-text').classList.add('d-none');
+    button.querySelector('.loading-spinner').classList.remove('d-none');
+    button.disabled = true;
+  }
+  function hideButtonLoading(button) {
+    button.querySelector('.btn-text').classList.remove('d-none');
+    button.querySelector('.loading-spinner').classList.add('d-none');
+    button.disabled = false;
+  }
+
+  function selectedFilterOn(){ return !!(selectedFilter && selectedFilter.checked); }
+
+  function showDownloadConfirmation() {
+    const totalOnPage = document.querySelectorAll('[data-snapshot]').length;
+    const count = selectedFilterOn() && selectedSet.size > 0 ? selectedSet.size : totalOnPage;
+    document.getElementById('download-count').textContent = count;
+    const mEl = ensureSingleModal('downloadConfirmModal');
+    // If a previous backdrop got stuck, clean it up before showing
+    if (window.cleanupModals) window.cleanupModals();
+    const m = bootstrap.Modal.getOrCreateInstance(mEl, { backdrop: 'static', keyboard: true });
+    m.show();
+  }
+
+  async function handleZipDownload() {
+    const confirmBtn = document.getElementById('confirmDownloadBtn');
+    showButtonLoading(confirmBtn);
+    try {
+      const url = new URL(window.location);
+      url.searchParams.set('download', '1');
+      if (selectedFilterOn() && selectedSet.size > 0) {
+        url.searchParams.set('selected', Array.from(selectedSet).join(','));
+      } else {
+        url.searchParams.delete('selected');
+      }
+      const link = document.createElement('a');
+      link.href = url.toString();
+      link.click();
+      setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('downloadConfirmModal')).hide(), 800);
+    } catch (e) {
+      showAlert('Download failed. Please try again.', 'danger');
+    } finally {
+      hideButtonLoading(confirmBtn);
+    }
+  }
+
+  (function(){
+    const btn = document.getElementById('bulkDeleteBtn');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      const selected = Array.from(selectedSet).join(',');
+      let scope = 'filtered';
+      if (selectedSet.size > 0) scope = 'selected';
+      else if (!HAS_FILTERS) scope = 'all';
+
+      const msg =
+        scope === 'selected' ? `Delete ${selectedSet.size} selected detections from database?` :
+        scope === 'filtered' ? `Delete all detections matching current filters from database?` :
+                               `Delete ALL detections from database?`;
+      if (!confirm(msg)) return;
+
+      const url = new URL(window.location);
+      const filters = Object.fromEntries(url.searchParams.entries());
+      fetch("{{ url_for('api_gallery_delete') }}", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ scope, filters, selected })
+      }).then(r => r.json()).then(res => {
+        if (res.error) { alert("Delete failed: " + res.error); return; }
+        alert(`Deleted ${res.deleted} records (${res.scope}).`);
+        window.location.reload();
+      }).catch(err => alert("Delete failed: " + err));
+    });
+  })();
+
+  const filterForm = document.getElementById('filterForm');
+  if (filterForm) {
+    filterForm.addEventListener('submit', () => {
+      if (selectedFilterOn() && selectedSet.size > 0) {
+        selectedInput.value = Array.from(selectedSet).join(',');
+      } else {
+        selectedInput.value = '';
+      }
+    });
+  }
+
+  // Wire buttons now (after helpers exist)
+  document.getElementById('downloadZipBtn')?.addEventListener('click', showDownloadConfirmation);
+  document.getElementById('confirmDownloadBtn')?.addEventListener('click', handleZipDownload);
+  async function downloadViaFetch(url, fallbackName){
+    const resp = await fetch(url, { credentials:'same-origin' });
+    if(!resp.ok) throw new Error(`Download failed: ${resp.status}`);
+    const disp = resp.headers.get('Content-Disposition') || '';
+    let name = fallbackName;
+    const m = /filename\*?=(?:UTF-8''|")?([^\";]+)/i.exec(disp);
+    if (m && m[1]) { try { name = decodeURIComponent(m[1]); } catch(_){ } }
+    const blob = await resp.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name || fallbackName || '';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  }
+
+  document.getElementById('downloadReportsBtn')?.addEventListener('click', async function() {
+    const cur   = new URL(window.location);
+    const pdf   = new URL("{{ url_for('export_filtered_pdf') }}",  window.location.origin);
+    const csv   = new URL("{{ url_for('export_filtered_csv') }}",  window.location.origin);
+
+    // helper: copy only meaningful filters from current URL to target URL
+    const copyFilters = (dest) => {
+      const ALLOW = new Set([
+        'type','min_speed','max_speed','direction','motion_state','object_id',
+        'snapshot_type','reviewed_only','flagged_only','unannotated_only',
+        'min_confidence','max_confidence','start_date','end_date'
+      ]);
+      cur.searchParams.forEach((v, k) => {
+        if (ALLOW.has(k) && v !== '') dest.searchParams.set(k, v);
+      });
+      // map gallery's "limit" to exporters' "max"
+      const limit = cur.searchParams.get('limit');
+      if (limit && /^\d+$/.test(limit)) dest.searchParams.set('max', limit);
+      // append current selection (if "Selected" is on)
+      if (selectedFilterOn() && selectedSet.size > 0) {
+        dest.searchParams.set('selected', Array.from(selectedSet).join(','));
+      }
+    };
+
+    copyFilters(pdf);
+    copyFilters(csv);
+
+    try { await downloadViaFetch(pdf.toString(), 'report.pdf'); } catch(err){ console.error(err); }
+    try { await downloadViaFetch(csv.toString(), 'report.csv'); } catch(err){ console.error(err); }
+  });
+
+  function showAlert(message, type) {
+    // Simple floating alert
+    document.querySelectorAll('.alert.position-fixed').forEach(a => a.remove());
+    const el = document.createElement('div');
+    el.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    el.style.cssText = 'top:80px;right:20px;z-index:9999;min-width:300px;';
+    el.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+  // ───────────────────────────────────────────────────────────────────────────
+  // Lazy-load bundle strips for cards (no server-side bundle_media needed)
+  // ───────────────────────────────────────────────────────────────────────────
+  async function discoverSealFor(basename){
+    try{
+      const r = await fetch(`/bundle/asset?snapshot=${encodeURIComponent(basename)}&name=seal.json`,
+                            { headers:{'Cache-Control':'no-cache'} });
+      if(!r.ok) return null;
+      const j = await r.json();
+      const payload = j && j.payload ? j.payload : null;
+      if (!payload || !payload.seal_id) return null;
+      return payload.seal_id;
+    }catch(_){ return null; }
+  }
+  function renderVerifyDetailsInline(j){
+    if (!j) return '<div class="text-danger">No data</div>';
+
+    // helpers
+    const formatIST = (ts) => {
+      if (!ts) return '';
+      try {
+        const d = new Date(ts);
+        if (isNaN(d.getTime())) return String(ts);
+        const parts = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Asia/Kolkata',
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          hour12: false
+        }).formatToParts(d).reduce((acc, p) => (acc[p.type] = p.value, acc), {});
+        return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second} IST`;
+      } catch { return String(ts); }
+    };
+    const pick = (obj, paths) => {
+      for (const p of paths) {
+        let cur = obj, ok = true;
+        for (const k of p) { if (!cur || !(k in cur)) { ok = false; break; } cur = cur[k]; }
+        if (ok && cur) return cur;
+      }
+      return null;
+    };
+    const toMap = (x) => {
+      if (!x) return {};
+      if (Array.isArray(x)) {
+        const m = {};
+        x.forEach(it => {
+          if (!it) return;
+          const name = it.name || it.file || it.path || it.key || it[0];
+          const val  = it.sha256 || it.hash || it.expected || it.value || it[1] || '';
+          if (name) m[name] = val;
+        });
+        return m;
+      }
+      return (typeof x === 'object') ? x : {};
+    };
+
+    const status = (j.status || 'unknown').toLowerCase();
+    const statusCls = status === 'verified' ? 'status-ok' : (status === 'tampered' ? 'status-bad' : 'status-unk');
+
+    // accept multiple JSON shapes
+    const filesMap = toMap(pick(j, [
+      ['details','files'],
+      ['details','payload','files'],
+      ['payload','files'],
+      ['files'], ['expected'], ['details','expected'],
+      ['files_expected'], ['details','files_expected']
+    ]));
+    const recomputedMap = toMap(pick(j, [
+      ['details','recomputed'], ['recomputed'], ['actual'], ['computed'], ['files_actual'],
+      ['files_recomputed'], ['details','files_recomputed']
+    ]));
+
+    const names = Array.from(new Set([...Object.keys(filesMap), ...Object.keys(recomputedMap)])).sort();
+    const rows = names.map(name => {
+      const exp = filesMap[name] || '';
+      const rec = recomputedMap[name] || '';
+      let st = 'status-unk', label = 'N/A';
+      if (exp && rec) {
+        st = (exp === rec) ? 'status-ok' : 'status-bad';
+        label = (exp === rec) ? 'OK' : 'MISMATCH';
+      } else if (exp && !rec) {
+        // expected file is listed in seal.json but we have no recomputed value -> treat as missing
+        st = 'status-bad'; label = 'MISSING';
+      } else if (!exp && rec) {
+        st = 'status-unk'; label = '—';
+      }
+      return `<tr>
+        <td>${name}</td>
+        <td><code>${exp || '—'}</code></td>
+        <td><code>${rec || '—'}</code></td>
+        <td class="${st}">${label}</td>
+      </tr>`;
+    }).join('');
+
+    const sealId = pick(j, [['details','payload','seal_id'], ['payload','seal_id'], ['seal_id']]) || '';
+    const site   = pick(j, [['details','payload','site'],    ['payload','site']]) || '';
+    const whenRaw = pick(j, [
+      ['details','payload','created_at'],
+      ['payload','created_at'],
+      ['verified_at'], ['details','verified_at']
+    ]) || '';
+    const when = formatIST(whenRaw);
+    const reason = j.reason || j.error || j.message || '';
+    const bodyRows = rows || '<tr><td colspan="4" class="text-muted">No per-file details returned by verifier.</td></tr>';
+
+    return `
+      <div class="verify-details-card">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <div><strong>Seal</strong> <code>${sealId}</code></div>
+          <div class="${statusCls}">${(j.status || 'unknown').toUpperCase()}</div>
+        </div>
+        <div class="small mb-2">${site ? site + ' · ' : ''}${when}</div>
+        ${reason ? `<div class="small text-warning mb-2">${reason}</div>` : ''}
+        <div class="verify-details">
+          <table class="table table-dark table-sm mb-2">
+            <thead><tr><th>File</th><th>Expected SHA-256</th><th>Recomputed SHA-256</th><th>Status</th></tr></thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+          ${j.bundle_url ? `<div class="mt-2"><a href="${j.bundle_url}" class="btn btn-slate btn-sm">Download bundle (.zip)</a></div>` : ''}
+        </div>
+      </div>`;
+  }
+  window.renderVerifyDetailsInline = renderVerifyDetailsInline;
+  function installVerifyOnCard(colEl){
+    const basename = colEl?.getAttribute('data-snapshot');
+    const area = colEl?.querySelector('.verify-area');
+    if (!basename || !area) return;
+    (async ()=>{
+      const sealId = await discoverSealFor(basename);
+      const badge = area.querySelector('.verify-badge');
+      const btn   = area.querySelector('.verify-btn');
+      const btnClose = area.querySelector('.close-verify-btn');
+      if (!sealId || !badge || !btn || !btnClose) return;
+      const container = colEl.querySelector('.gallery-image-container');
+      if (container) container.setAttribute('data-seal-id', sealId);
+      colEl.setAttribute('data-seal-id', sealId);
+      // show 'Verify' button and populate badge asynchronously
+      btn.classList.remove('d-none');
+      try{
+        const r = await fetch(`/verify/${encodeURIComponent(sealId)}?json=1`, { headers:{'Accept':'application/json'} });
+        if(r.ok){
+          const j = await r.json();
+          const ok = (j.status === 'verified');
+          badge.textContent = ok ? '✓ Verified' : '✗ Tampered';
+          badge.classList.remove('d-none','badge-unk');
+          badge.classList.add(ok ? 'badge-ok' : 'badge-bad');
+        }
+      }catch(_){}
+      // inline verify handler
+      btn.addEventListener('click', async ()=>{
+        btn.disabled = true; btn.textContent = 'Verifying…';
+        const detailsEl = colEl.querySelector(`[data-verify-details="${basename}"]`);
+        const mediaEl   = colEl.querySelector('.gallery-image-container');
+        try{
+          const r = await fetch(`/verify/${encodeURIComponent(sealId)}?json=1`, { headers:{'Accept':'application/json'} });
+          let data = null; try { data = await r.json(); } catch(_){ data = null; }
+          if(!r.ok && !(data && (data.status || data.reason))) throw new Error('request failed');
+          if (mediaEl) mediaEl.classList.add('d-none');
+          if (detailsEl){
+            detailsEl.innerHTML = renderVerifyDetailsInline(data);
+            detailsEl.classList.remove('d-none');
+          }
+          btn.classList.add('d-none');
+          btnClose.classList.remove('d-none');
+        } catch(e){
+          alert('Verification failed.');
+        } finally {
+          btn.disabled = false; btn.textContent = 'Verify';
+        }
+      });
+      // close inline view
+      btnClose.addEventListener('click', ()=>{
+        const detailsEl = colEl.querySelector(`[data-verify-details="${basename}"]`);
+        const mediaEl   = colEl.querySelector('.gallery-image-container');
+        if (detailsEl){ detailsEl.classList.add('d-none'); detailsEl.innerHTML=''; }
+        if (mediaEl) mediaEl.classList.remove('d-none');
+        btn.classList.remove('d-none');
+        btnClose.classList.add('d-none');
+      });
+   })();
+  }
+
+  async function fetchBundleManifest(basename){
+    try{
+      const r = await fetch(`/api/bundle_manifest?snapshot=${encodeURIComponent(basename)}`,
+                            { headers: {'Cache-Control':'no-cache'} });
+      if(!r.ok) return null;
+      return await r.json();
+    }catch(_){ return null; }
+  }
+  function renderCardStrip(el, manifest, basename){
+    if(!el || !manifest) return;
+    el.innerHTML = '';
+    const items = [];
+    (manifest.images || []).forEach(img => items.push({kind:'image', name:img.name, url:img.url}));
+    (manifest.videos || []).forEach(vid => items.push({kind:'video', name:vid.name, url:vid.url}));
+    if ((!manifest.videos || !manifest.videos.length) && Array.isArray(manifest.media)) {
+      manifest.media.forEach(m => {
+        if (m && m.url && (m.type === 'image' || m.type === 'video')) items.push({kind:m.type, name:m.name, url:m.url});
+      });
+    }
+    items.slice(0, 10).forEach(it => {
+      const a = document.createElement('a');
+      a.href = it.url;
+      a.className = 'media-thumb';
+      a.dataset.kind = it.kind;
+      a.dataset.parent = basename;
+      if (it.kind === 'image') {
+        const img = document.createElement('img');
+        img.alt = it.name || '';
+        img.loading = 'lazy';
+        img.src = it.url;
+        a.appendChild(img);
+      } else {
+        const v = document.createElement('video');
+        v.muted = true; v.playsInline = true; v.preload = 'none';
+        a.appendChild(v);
+        const badge = document.createElement('div');
+        badge.className = 'play-badge'; badge.textContent = '▶';
+        a.appendChild(badge);
+      }
+      el.appendChild(a);
+    });
+  }
+
+  let _playlist = [];
+  let _playlistIdx = -1;
+  let _playlistSnap = '';
+
+  function collectVideos(manifest){
+    const out = [];
+    if (manifest && Array.isArray(manifest.videos)) {
+      manifest.videos.forEach(v => { if (v && v.url) out.push({ url: v.url, name: v.name || '' }); });
+    }
+    if (!out.length && Array.isArray(manifest?.media)) {
+      manifest.media.forEach(m => { if (m && m.url && m.type === 'video') out.push({ url: m.url, name: m.name || '' }); });
+    }
+    // Prefer "clip.mp4" first if present, then natural order
+    out.sort((a,b) => {
+      const ac = /clip\.mp4$/i.test(a.url) ? -1 : 0;
+      const bc = /clip\.mp4$/i.test(b.url) ? -1 : 0;
+      if (ac !== bc) return ac - bc;
+      return a.url.localeCompare(b.url);
+    });
+    return out;
+  }
+
+  function playModalVideo(url){
+    const vid = document.getElementById('modalVideo');
+    const src = document.getElementById('modalVideoSource');
+    const img = document.getElementById('modalImage');
+    if (!vid) return;
+    if (img) img.style.display = 'none';
+    vid.style.display = 'block';
+    const bust = url + (url.includes('?') ? '&' : '?') + 'ts=' + Date.now();
+    if (src) { src.type = 'video/mp4'; src.src = bust; }
+    vid.src = bust;
+    vid.controls = true;
+    vid.preload  = 'metadata';
+    vid.playsInline = true;
+    vid.oncanplay = () => { vid.play().catch(()=>{}); };
+    vid.load();
+  }
+
+  function installPlaylistHandlers(){
+    const v = document.getElementById('modalVideo');
+    if (!v) return;
+    // Advance when a clip ends
+    v.onended = () => {
+      if (_playlistIdx + 1 < _playlist.length) {
+        _playlistIdx += 1;
+        playModalVideo(_playlist[_playlistIdx].url);
+      } else {
+        // end of playlist — optional toast
+        // showAlert('All clips played.', 'info');
+      }
+    };
+  }
+
+  // Export real starter into global (so earlier click handlers can call it)
+  window.__playlist_start = async function(basename, startUrl=null){
+    try{
+      const man  = await fetchBundleManifest(basename);
+      const list = collectVideos(man);
+      if (!list.length) { alert('No video clip found in this bundle.'); return; }
+      const idx = startUrl ? Math.max(list.findIndex(v => v.url === startUrl), 0) : 0;
+      _playlist = list;
+      _playlistIdx = idx;
+      _playlistSnap = basename;
+      // open modal (video mode) and begin
+      openInModal('video', list[idx].url, 'Violation Clips', basename);
+      // allow modal to render then bind onended
+      setTimeout(installPlaylistHandlers, 80);
+    }catch(e){
+      console.error(e);
+      alert('Could not start clip playback.');
+    }
+  };
+  // point the public API to the real function
+  window.startPlaylistFor = window.__playlist_start;
+  // if a click happened before init finished, run it now
+  if (window.__deferredPlaylist) {
+    const [b,u] = window.__deferredPlaylist;
+    delete window.__deferredPlaylist;
+    window.startPlaylistFor(b,u);
+  }
+
+  const observer = new IntersectionObserver((entries)=>{
+    entries.forEach(async entry=>{
+      if(!entry.isIntersecting) return;
+      const el = entry.target;
+      observer.unobserve(el);
+      const basename = el.getAttribute('data-strip-for');
+      const man = await fetchBundleManifest(basename);
+      renderCardStrip(el, man, basename);
+    });
+  }, { rootMargin: '200px 0px' });
+  document.querySelectorAll('.card-strip[data-strip-for]').forEach(el=>observer.observe(el));
+  document.querySelectorAll('#galleryContainer > .col').forEach(installVerifyOnCard);
+});
+</script>
+</div>
+{% endblock %}
+

@@ -1,0 +1,1894 @@
+{% extends "base.html" %}
+{% block title %}System Control Panel{% endblock %}
+{% block content %}
+
+<style>
+/* compact form + card spacing just for control page */
+.control-compact .card-header{padding:.5rem .75rem}
+.control-compact .card-body{padding:.75rem}
+.control-compact .form-control,
+.control-compact .form-select,
+.control-compact .btn{padding:.35rem .5rem; font-size:.875rem}
+.control-compact .row.g-3{--bs-gutter-x: .75rem; --bs-gutter-y: .75rem}
+.control-compact .row.g-2{--bs-gutter-x: .5rem; --bs-gutter-y: .5rem}
+
+/* PTZ inputs even tighter */
+.control-compact .ptz-settings .form-control,
+.control-compact .ptz-settings .form-select { padding:.25rem .5rem; font-size:.84rem }
+</style>
+<div class="control-compact">
+
+<!-- Header Section -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold" style="color: var(--text-color);">System Control Panel</h2>
+    </div>
+    <span class="badge bg-primary fs-6 px-3 py-2">Admin Access</span>
+</div>
+
+<!-- Alert Messages -->
+{% if message %}
+<div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+    <i class="fas fa-info-circle me-2"></i>
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<!-- System Status Dashboard -->
+<div class="row g-4 mb-5">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header" style="background-color: var(--section-bg); color: var(--text-color);">
+                <h5 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>System Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded" style="background-color: var(--card-bg); color: var(--text-color);">
+                            <i class="fas fa-radar fa-2x mb-2 text-primary"></i>
+                            <h6 class="fw-bold">Radar</h6>
+                            <span class="badge {{ 'bg-success' if radar_status else 'bg-danger' }} fs-6 px-3 py-2">
+                                {{ 'Connected' if radar_status else 'Disconnected' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded" style="background-color: var(--card-bg); color: var(--text-color);">
+                            <i class="fas fa-camera fa-2x mb-2 text-info"></i>
+                            <h6 class="fw-bold">Camera</h6>
+                            <span class="badge {{ 'bg-success' if camera_status else 'bg-danger' }} fs-6 px-3 py-2">
+                                {{ 'Connected' if camera_status else 'Disconnected' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded" style="background-color: var(--card-bg); color: var(--text-color);">
+                            <i class="fas fa-hdd fa-2x mb-2 text-warning"></i>
+                            <h6 class="fw-bold">Storage</h6>
+                            <span class="badge bg-info fs-6 px-3 py-2">{{ disk_free }} GB Free</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Configuration Form -->
+<div class="row g-4 mb-5">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: var(--section-bg); color: var(--text-color);">
+                <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>System Configuration</h5>
+                <button class="btn btn-sm btn-outline-secondary" type="button" 
+                        data-bs-toggle="collapse" data-bs-target="#systemConfigSettings">
+                    <i class="fas fa-chevron-down me-1"></i>Toggle Settings
+                </button>
+            </div>
+            <div class="collapse" id="systemConfigSettings">
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    
+                    <!-- Basic Settings -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header" style="background-color: var(--card-header-bg);">
+                                    <h6 class="mb-0 text-primary">Detection Settings</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="cooldown_seconds" class="form-label fw-bold">
+                                            <i class="fas fa-clock me-1"></i>Detection Cooldown (seconds)
+                                        </label>
+                                        <input type="number" step="0.1" min="0" name="cooldown_seconds" 
+                                               class="form-control" value="{{ config.cooldown_seconds }}" required>
+                                        <div class="fas fa-info-circle me-2">Time between consecutive detections</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="annotation_conf_threshold" class="form-label fw-bold">
+                                            <i class="fas fa-info-circle me-2"></i>Annotation Confidence Threshold
+                                        </label>
+                                        <input type="number" step="0.01" min="0.1" max="1.0" 
+                                               name="annotation_conf_threshold" class="form-control" 
+                                               value="{{ config.annotation_conf_threshold }}">
+                                        <div class="fas fa-info-circle me-2">Minimum confidence level for annotations</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header" style="background-color: var(--card-header-bg);">
+                                    <h6 class="mb-0 text-primary">Data Management</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="retention_days" class="form-label fw-bold">
+                                            <i class="fas fa-calendar-alt me-1"></i>Data Retention (days)
+                                        </label>
+                                        <input type="number" min="1" name="retention_days" 
+                                               class="form-control" value="{{ config.retention_days }}" required>
+                                        <div class="fas fa-info-circle me-2">Number of days to keep detection data</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Site & Location -->
+                    <div class="card mb-4">
+                        <div class="card-header" style="background-color: var(--card-header-bg);">
+                            <h6 class="mb-0 text-primary">
+                                <i class="fas fa-map-marker-alt me-2"></i>Site & Location
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Site ID</label>
+                                    <input type="text" class="form-control" name="site_id"
+                                           value="{{ (config.site.site_id if config.site else '') or '' }}">
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-bold">Site Name</label>
+                                    <input type="text" class="form-control" name="site_name"
+                                           value="{{ (config.site.name if config.site else '') or '' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Timezone</label>
+                                    <input type="text" class="form-control" name="site_timezone"
+                                           placeholder="e.g. Asia/Kolkata"
+                                           value="{{ (config.site.timezone if config.site else '') or '' }}">
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold">Address</label>
+                                    <input type="text" class="form-control" name="site_address"
+                                           value="{{ (config.site.address if config.site else '') or '' }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Latitude</label>
+                                    <input type="number" step="any" class="form-control" name="site_lat"
+                                           value="{{ (config.site.lat if config.site else '') }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Longitude</label>
+                                    <input type="number" step="any" class="form-control" name="site_lon"
+                                           value="{{ (config.site.lon if config.site else '') }}">
+                                </div>
+                                <div class="col-md-3 d-flex align-items-center">
+                                    <div class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" id="locEnabled" name="location_enabled"
+                                               {% if config.location and config.location.enabled %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="locEnabled">Location Enabled</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 d-flex align-items-center">
+                                    <div class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" id="preferGps" name="prefer_gps"
+                                               {% if config.location and config.location.prefer_gps %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="preferGps">Prefer GPS (gpsd)</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">gpsd Host</label>
+                                    <input type="text" class="form-control" name="gpsd_host"
+                                           value="{{ (config.location.gpsd_host if config.location else '127.0.0.1') }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">gpsd Port</label>
+                                    <input type="number" class="form-control" name="gpsd_port"
+                                           value="{{ (config.location.gpsd_port if config.location else 2947) }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Poll Seconds</label>
+                                    <input type="number" min="1" class="form-control" name="poll_seconds"
+                                           value="{{ (config.location.poll_seconds if config.location else 60) }}">
+                                </div>
+                                <div class="col-12 small text-muted">
+                                    The dashboard map reads <code>/api/location</code>. When GPS is enabled, it uses the gpsd fix; otherwise it falls back to the static coordinates above.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Camera Configuration -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center" style="background-color: var(--card-header-bg);"> 
+                            <h6 class="mb-0 text-primary">
+                                <i class="fas fa-video me-2"></i>Camera Configuration
+                            </h6>
+                            <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#cameraSettings">
+                                <i class="fas fa-chevron-down me-1"></i>Toggle Settings
+                            </button>
+                        </div>
+                        <div class="collapse" id="cameraSettings">
+                            <div class="card-body">
+                                {# Prefer DB cameras if provided; fall back to config.cameras #}
+                                {% set cams = (db_cameras if db_cameras is defined and db_cameras else (config.cameras or [])) %}
+                                <div class="row row-cols-1 row-cols-lg-2 g-3" id="cameraRows">
+                                    {% for cam in cams %}
+                                    {% set idx = cam.id if cam.id is defined else loop.index0 %}
+                                    <div class="{{ 'col-12' if loop.last and (cams|length is odd) else 'col-12 col-lg-6' }} camera-entry">
+                                        <div class="card-header position-relative border rounded p-3" style="background-color: var(--card-header-bg);"> 
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h6 class="fw-bold mb-0">
+                                                    <i class="fas fa-camera me-1"></i>{{ cam.name or ('Camera ' ~ (loop.index)) }}
+                                                </h6>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="removeCamera(this)">
+                                                    <i class="fas fa-trash me-1"></i>Remove
+                                                </button>
+                                           </div>
+                                            <input type="hidden" name="camera_index" value="{{ loop.index0 }}">
+                                            <input type="hidden" name="camera_id_{{ loop.index0 }}" value="{{ cam.id if cam.id is defined else '' }}">
+                                            <input type="hidden" name="camera_delete_{{ loop.index0 }}" value="0">
+                                            <div class="row g-2">
+                                              <div class="col-md-6">
+                                                <label class="form-label fw-bold">Name</label>
+                                                <input type="text" class="form-control"
+                                                       name="camera_name_{{ loop.index0 }}" value="{{ cam.name or '' }}">
+                                              </div>
+                                              <div class="col-md-6">
+                                                <label class="form-label fw-bold">Role</label>
+                                                <select class="form-select" name="camera_role_{{ loop.index0 }}">
+                                                  {% set role = (cam.role or 'aux') %}
+                                                  <option value="primary" {% if role == 'primary' %}selected{% endif %}>Primary</option>
+                                                  <option value="ptz"     {% if role == 'ptz' %}selected{% endif %}>PTZ</option>
+                                                  <option value="aux"     {% if role == 'aux' %}selected{% endif %}>Aux</option>
+                                                </select>
+                                              </div>
+                                              <div class="col-12">
+                                                <label class="form-label fw-bold">Stream URL</label>
+                                                <input type="text" class="form-control"
+                                                       name="camera_url_{{ loop.index0 }}" value="{{ cam.url }}" required>
+                                              </div>
+                                              <div class="col-12">
+                                                <label class="form-label fw-bold">Snapshot URL (optional)</label>
+                                                <input type="text" class="form-control"
+                                                       name="camera_snapshot_url_{{ loop.index0 }}" value="{{ cam.snapshot_url or '' }}">
+                                              </div>
+                                              <div class="col-md-6">
+                                                <label class="form-label fw-bold">Username</label>
+                                                <input type="text" class="form-control"
+                                                       name="camera_username_{{ loop.index0 }}" value="{{ cam.username }}">
+                                              </div>
+                                              <div class="col-md-6">
+                                                <label class="form-label fw-bold">Password</label>
+                                                <input type="password" class="form-control"
+                                                       name="camera_password_{{ loop.index0 }}" value="{{ cam.password }}">
+                                              </div>
+                                              <div class="col-md-6">
+                                                <label class="form-label fw-bold">Stream Type</label>
+                                                <select class="form-select" name="camera_stream_type_{{ loop.index0 }}">
+                                                  <option value="mjpeg"   {% if cam.stream_type == 'mjpeg' %}selected{% endif %}>MJPEG Stream</option>
+                                                  <option value="snapshot"{% if cam.stream_type == 'snapshot' %}selected{% endif %}>Snapshot Only</option>
+                                                  <option value="rtsp"    {% if cam.stream_type == 'rtsp' %}selected{% endif %}>RTSP Stream</option>
+                                                </select>
+                                              </div>
+                                              <div class="col-md-6 d-flex align-items-end">
+                                                <div class="form-check form-switch">
+                                                  <input class="form-check-input" type="checkbox"
+                                                         id="activeCam{{ cam.id if cam.id is defined else idx }}"
+                                                         name="camera_enabled_{{ loop.index0 }}"
+                                                         {% if cam.enabled %}checked{% endif %}>
+                                                  <label class="form-check-label fw-bold"
+                                                         for="activeCam{{ cam.id if cam.id is defined else idx }}">Active</label>
+                                                </div>
+                                              </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="d-grid mt-3">
+                                  <button type="button" class="btn btn-outline-primary" onclick="addCameraField()">
+                                      <i class="fas fa-plus me-2"></i>Add New Camera
+                                  </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                                        <!-- PTZ Configuration -->
+                    <div class="card mb-4" id="ptzConfigCard">
+                        <div class="card-header d-flex justify-content-between align-items-center" style="background-color: var(--card-header-bg);">
+                            <h6 class="mb-0 text-primary">
+                                <i class="fas fa-compass me-2"></i>PTZ Configuration
+                            </h6>
+                            <div class="d-flex gap-2">
+                                <!-- Autotrack: let checkbox be present only when ON (backend expects presence) -->
+                                <div class="form-check form-switch me-2">
+                                    <input class="form-check-input" type="checkbox" id="ptzAutotrack" name="ptz_autotrack"
+                                           {% if config.ptz_autotrack %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="ptzAutotrack">Auto-track</label>
+                                </div>
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#ptzSections">
+                                    <i class="fas fa-chevron-down me-1"></i>Toggle Sections
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="collapse" id="ptzSections">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <!-- Connection -->
+                                    <div class="col-12">
+                                        <div class="card h-100">
+                                            <div class="card-header" style="background-color: var(--card-header-bg);">
+                                                <h6 class="mb-0 text-primary"><i class="fas fa-network-wired me-2"></i>Connection</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row g-2">
+                                                    <div class="col-md-4">
+                                                        <label class="form-label fw-bold">Host / IP</label>
+                                                        <input type="text" class="form-control" name="ptz_host"
+                                                               value="{{ (config.ptz.host if config.ptz else '') }}">
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <label class="form-label fw-bold">Port</label>
+                                                        <input type="number" class="form-control" name="ptz_port"
+                                                               value="{{ (config.ptz.port if config.ptz else 80) }}">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">Scheme</label>
+                                                        {% set scheme = (config.ptz.scheme if config.ptz and config.ptz.scheme else 'http') %}
+                                                        <select class="form-select" name="ptz_scheme">
+                                                            <option value="http"  {% if scheme == 'http' %}selected{% endif %}>http</option>
+                                                            <option value="https" {% if scheme == 'https' %}selected{% endif %}>https</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">Auth Mode</label>
+                                                        {% set am = (config.ptz.auth_mode if config.ptz and config.ptz.auth_mode else 'digest') %}
+                                                        <select class="form-select" name="ptz_auth_mode">
+                                                            <option value="none"   {% if am == 'none' %}selected{% endif %}>none</option>
+                                                            <option value="basic"  {% if am == 'basic' %}selected{% endif %}>basic</option>
+                                                            <option value="digest" {% if am == 'digest' %}selected{% endif %}>digest</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label fw-bold">Username</label>
+                                                        <input type="text" class="form-control" name="ptz_username"
+                                                               value="{{ (config.ptz.username if config.ptz else '') }}">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label fw-bold">Password</label>
+                                                        <input type="password" class="form-control" name="ptz_password"
+                                                               value="{{ (config.ptz.password if config.ptz else '') }}">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label fw-bold">Profile Token (optional)</label>
+                                                        <input type="text" class="form-control" name="ptz_profile_token"
+                                                               value="{{ (config.ptz.profile_token if config.ptz else '') }}">
+                                                    </div>
+                                                    <div class="col-12 d-flex justify-content-end">
+                                                        <button type="button" id="btnTestPTZ" class="btn btn-outline-primary">
+                                                            <i class="fas fa-plug me-2"></i>Test PTZ
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mount -->
+                                    <div class="col-12">
+                                        <div class="card h-100">
+                                            <div class="card-header" style="background-color: var(--card-header-bg);">
+                                                <h6 class="mb-0 text-primary"><i class="fas fa-ruler-combined me-2"></i>Mount (Radar → PTZ)</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row g-2">
+                                                    <div class="col-md-2">
+                                                        <label class="form-label fw-bold">dx (m)</label>
+                                                        <input type="number" step="0.001" class="form-control" name="ptz_mount_dx_m"
+                                                               value="{{ (config.ptz.mount.dx_m if config.ptz and config.ptz.mount else 0) }}">
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <label class="form-label fw-bold">dy (m)</label>
+                                                        <input type="number" step="0.001" class="form-control" name="ptz_mount_dy_m"
+                                                               value="{{ (config.ptz.mount.dy_m if config.ptz and config.ptz.mount else 0) }}">
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <label class="form-label fw-bold">dz (m)</label>
+                                                        <input type="number" step="0.001" class="form-control" name="ptz_mount_dz_m"
+                                                               value="{{ (config.ptz.mount.dz_m if config.ptz and config.ptz.mount else 0) }}">
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <label class="form-label fw-bold">yaw (°)</label>
+                                                        <input type="number" step="0.1" class="form-control" name="ptz_mount_yaw_deg"
+                                                               value="{{ (config.ptz.mount.yaw_deg if config.ptz and config.ptz.mount else 0) }}">
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <label class="form-label fw-bold">pitch (°)</label>
+                                                        <input type="number" step="0.1" class="form-control" name="ptz_mount_pitch_deg"
+                                                               value="{{ (config.ptz.mount.pitch_deg if config.ptz and config.ptz.mount else 0) }}">
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <label class="form-label fw-bold">roll (°)</label>
+                                                        <input type="number" step="0.1" class="form-control" name="ptz_mount_roll_deg"
+                                                               value="{{ (config.ptz.mount.roll_deg if config.ptz and config.ptz.mount else 0) }}">
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    Tip: if PTZ is below radar, <code>dz</code> is negative and if the PTZ is inverted, <code>roll (°)</code> is 180°.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Home Pose -->
+                                    <div class="col-12">
+                                        <div class="card h-100">
+                                            <div class="card-header" style="background-color: var(--card-header-bg);">
+                                                <h6 class="mb-0 text-primary"><i class="fas fa-home me-2"></i>Home Pose</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row g-2">
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">Pan (°)</label>
+                                                        <input type="number" step="0.1" class="form-control" name="ptz_home_pan_deg"
+                                                               value="{{ (config.ptz.home.pan_deg if config.ptz and config.ptz.home else 0) }}">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">Tilt (°)</label>
+                                                        <input type="number" step="0.1" class="form-control" name="ptz_home_tilt_deg"
+                                                               value="{{ (config.ptz.home.tilt_deg if config.ptz and config.ptz.home else 0) }}">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">Zoom</label>
+                                                        <input type="number" step="0.01" class="form-control" name="ptz_home_zoom"
+                                                               value="{{ (config.ptz.home.zoom if config.ptz and config.ptz.home else 1.0) }}">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">Preset (optional)</label>
+                                                        <input type="text" class="form-control" name="ptz_home_preset"
+                                                               value="{{ (config.ptz.home.preset if config.ptz and config.ptz.home else '') }}">
+                                                    </div>
+                                                    <div class="col-md-3 d-flex align-items-end">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="ptzWaitSettle" name="ptz_home_wait_settle"
+                                                                   {% if config.ptz and config.ptz.home and config.ptz.home.wait_settle %}checked{% endif %}>
+                                                            <label class="form-check-label fw-bold" for="ptzWaitSettle">Wait settle</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">Settle (s)</label>
+                                                        <input type="number" step="0.1" class="form-control" name="ptz_home_settle_s"
+                                                               value="{{ (config.ptz.home.settle_s if config.ptz and config.ptz.home else 0.0) }}">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">Settle Samples</label>
+                                                        <input type="number" step="1" class="form-control" name="ptz_home_settle_samples"
+                                                               value="{{ (config.ptz.home.settle_samples if config.ptz and config.ptz.home else 0) }}">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-bold">Sample Sleep (s)</label>
+                                                        <input type="number" step="0.01" class="form-control" name="ptz_home_settle_sample_sleep_s"
+                                                               value="{{ (config.ptz.home.settle_sample_sleep_s if config.ptz and config.ptz.home else 0.0) }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Controller Tuning -->
+                                    <div class="col-12">
+                                        <div class="card h-100">
+                                            <div class="card-header" style="background-color: var(--card-header-bg);">
+                                                <h6 class="mb-0 text-primary"><i class="fas fa-sliders-h me-2"></i>Controller</h6>
+                                            </div>
+                                              <div class="card-body ptz-settings">
+                                                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">Deadband</label>
+                                                    <div class="input-group">
+                                                      <input type="number" step="0.1" class="form-control" name="ptz_deadband_deg"
+                                                            value="{{ (config.ptz.control.deadband_deg if config.ptz and config.ptz.control else 0.5) }}">
+                                                      <span class="input-group-text" style="background-color: var(--card-bg); color: var(--text-color); border-color: var(--border-color);">°</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">k_pan</label>
+                                                    <input type="number" step="0.001" class="form-control" name="ptz_k_pan"
+                                                          value="{{ (config.ptz.control.k_pan if config.ptz and config.ptz.control else 0.2) }}">
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">k_tilt</label>
+                                                    <input type="number" step="0.001" class="form-control" name="ptz_k_tilt"
+                                                          value="{{ (config.ptz.control.k_tilt if config.ptz and config.ptz.control else 0.2) }}">
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">max_vx</label>
+                                                    <input type="number" step="0.01" class="form-control" name="ptz_max_vx"
+                                                          value="{{ (config.ptz.control.max_vx if config.ptz and config.ptz.control else 0.9) }}">
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">max_vy</label>
+                                                    <input type="number" step="0.01" class="form-control" name="ptz_max_vy"
+                                                          value="{{ (config.ptz.control.max_vy if config.ptz and config.ptz.control else 0.9) }}">
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">max_step</label>
+                                                    <div class="input-group">
+                                                      <input type="number" step="0.01" class="form-control" name="ptz_max_step_s"
+                                                            value="{{ (config.ptz.control.max_step_s if config.ptz and config.ptz.control else 0.35) }}">
+                                                      <span class="input-group-text" style="background-color: var(--card-bg); color: var(--text-color); border-color: var(--border-color);">s</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">stop_pulse</label>
+                                                    <div class="input-group">
+                                                      <input type="number" step="0.01" class="form-control" name="ptz_stop_pulse_s"
+                                                            value="{{ (config.ptz.control.stop_pulse_s if config.ptz and config.ptz.control else 0.12) }}">
+                                                      <span class="input-group-text" style="background-color: var(--card-bg); color: var(--text-color); border-color: var(--border-color);">s</span>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                         </div>
+                                    </div>
+
+                                    <!-- Zoom & Intrinsics -->
+                                    <div class="col-12">
+                                        <div class="card h-100">
+                                            <div class="card-header" style="background-color: var(--card-header-bg);">
+                                                <h6 class="mb-0 text-primary"><i class="fas fa-search-plus me-2"></i>Zoom & Intrinsics</h6>
+                                            </div>
+                                              <div class="card-body ptz-settings">
+                                                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">Zoom Min</label>
+                                                    <div class="input-group">
+                                                      <input type="number" step="0.01" class="form-control" name="ptz_zoom_min"
+                                                            value="{{ (config.ptz.zoom.min if config.ptz and config.ptz.zoom else 1.0) }}">
+                                                      <span class="input-group-text" style="background-color: var(--card-bg); color: var(--text-color); border-color: var(--border-color);">×</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">Zoom Max</label>
+                                                    <div class="input-group">
+                                                      <input type="number" step="0.01" class="form-control" name="ptz_zoom_max"
+                                                            value="{{ (config.ptz.zoom.max if config.ptz and config.ptz.zoom else 10.0) }}">
+                                                      <span class="input-group-text" style="background-color: var(--card-bg); color: var(--text-color); border-color: var(--border-color);">×</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">FOV Horizontal</label>
+                                                    <div class="input-group">
+                                                      <input type="number" step="0.1" class="form-control" name="ptz_intrinsics_fov_h_deg"
+                                                            value="{{ (config.ptz.intrinsics.fov_h_deg if config.ptz and config.ptz.intrinsics else 90.0) }}">
+                                                      <span class="input-group-text" style="background-color: var(--card-bg); color: var(--text-color); border-color: var(--border-color);">°</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">Target Distance</label>
+                                                    <div class="input-group">
+                                                      <input type="number" step="0.1" class="form-control" name="ptz_zoom_target_m"
+                                                            value="{{ (config.ptz.zoom_target_m if config.ptz and config.ptz.zoom_target_m is not none else 18.0) }}">
+                                                      <span class="input-group-text" style="background-color: var(--card-bg); color: var(--text-color); border-color: var(--border-color);">m</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">Deadband</label>
+                                                    <div class="input-group">
+                                                      <input type="number" step="0.1" class="form-control" name="ptz_zoom_deadband_m"
+                                                            value="{{ (config.ptz.zoom_deadband_m if config.ptz and config.ptz.zoom_deadband_m is not none else 5.0) }}">
+                                                      <span class="input-group-text" style="background-color: var(--card-bg); color: var(--text-color); border-color: var(--border-color);">m</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">Zoom kP</label>
+                                                    <input type="number" step="0.001" class="form-control" name="ptz_zoom_kp"
+                                                          value="{{ (config.ptz.zoom_kp if config.ptz and config.ptz.zoom_kp is not none else 0.03) }}">
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">Zoom Pulse</label>
+                                                    <div class="input-group">
+                                                      <input type="number" step="0.01" class="form-control" name="ptz_zoom_seconds"
+                                                            value="{{ (config.ptz.zoom_seconds if config.ptz and config.ptz.zoom_seconds is not none else 0.20) }}">
+                                                      <span class="input-group-text" style="background-color: var(--card-bg); color: var(--text-color); border-color: var(--border-color);">s</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <div class="col">
+                                                    <label class="form-label fw-bold">Enable if |Δangle| ≥</label>
+                                                    <div class="input-group">
+                                                      <input type="number" step="0.1" class="form-control" name="ptz_zoom_enable_error_deg"
+                                                            value="{{ (config.ptz.zoom_enable_error_deg if config.ptz and config.ptz.zoom_enable_error_deg is not none else 2.0) }}">
+                                                      <span class="input-group-text" style="background-color: var(--card-bg); color: var(--text-color); border-color: var(--border-color);">°</span>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                        </div>
+                                    </div>
+                                </div> <!-- /row -->
+                            </div> <!-- /card-body -->
+                        </div> <!-- /collapse -->
+                    </div>
+      
+                    <!-- Speed Limits Configuration -->
+                    <div class="card mb-4">
+                        <div class="card-header" style="background-color: var(--card-header-bg);">
+                            <h6 class="mb-0 text-primary">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dynamic Speed Limits
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                {% for key, val in config.dynamic_speed_limits.items() %}
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold text-uppercase">
+                                        {% if key == 'default' %}
+                                            <i class="fas fa-car me-1"></i>Default Type
+                                        {% else %}
+                                            <i class="fas fa-car me-1"></i>{{ key }}
+                                        {% endif %}
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.1" name="speed_limit_{{ key }}" 
+                                               value="{{ val }}" class="form-control">
+                                        <span class="input-group-text" style="background-color: var(--card-bg); color: var(--text-color); border-color: var(--border-color);">
+                                        km/h
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Camera Intrinsics & Speed Correction -->
+                    <div class="card mb-4">
+                    <div class="card-header" style="background-color: var(--card-header-bg);">
+                        <h6 class="mb-0 text-primary">
+                        <i class="fas fa-vector-square me-2"></i>Camera Intrinsics & Speed Correction
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Width (px)</label>
+                            <input type="number" class="form-control" name="camera_width_px"
+                                value="{{ config.camera_width_px or 640 }}" min="160" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Height (px)</label>
+                            <input type="number" class="form-control" name="camera_height_px"
+                                value="{{ config.camera_height_px or 480 }}" min="120" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Horizontal FOV (°)</label>
+                            <input type="number" step="0.1" class="form-control" name="camera_fov_h_deg"
+                                value="{{ config.camera_fov_h_deg or 90.0 }}" min="10" max="180" required>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="useSpeedCorr"
+                                    name="use_speed_correction"
+                                    {% if config.use_speed_correction %}checked{% endif %}>
+                            <label class="form-check-label fw-bold" for="useSpeedCorr">
+                                Use corrected speed in UI
+                            </label>
+                            </div>
+                        </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Distortion (k1,k2,p1,p2,k3)</label>
+                            <div class="input-group">
+                            <input type="number" step="0.000001" class="form-control" name="distortion_0"
+                                    value="{{ (config.distortion[0] if config.distortion and config.distortion|length>0 else 0) }}">
+                            <input type="number" step="0.000001" class="form-control" name="distortion_1"
+                                    value="{{ (config.distortion[1] if config.distortion and config.distortion|length>1 else 0) }}">
+                            <input type="number" step="0.000001" class="form-control" name="distortion_2"
+                                    value="{{ (config.distortion[2] if config.distortion and config.distortion|length>2 else 0) }}">
+                            <input type="number" step="0.000001" class="form-control" name="distortion_3"
+                                    value="{{ (config.distortion[3] if config.distortion and config.distortion|length>3 else 0) }}">
+                            <input type="number" step="0.000001" class="form-control" name="distortion_4"
+                                    value="{{ (config.distortion[4] if config.distortion and config.distortion|length>4 else 0) }}">
+                            </div>
+                            <div class="fas fa-info-circle me-2">Leave zeros if you haven’t run a checkerboard calibration.</div>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                    <!-- Form Actions -->
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <button type="submit" name="action" value="update_config" 
+                                class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-save me-2"></i>Save Configuration
+                        </button>
+                        <button type="button" class="btn btn-primary btn-lg px-4" onclick="reloadConfig()">
+                          <i class="fas fa-sync-alt me-2"></i>Reload Live Configuration
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Model Management Panel -->
+<div class="card shadow-sm mb-5">
+  <div class="card-header d-flex justify-content-between align-items-center" style="background-color: var(--section-bg); color: var(--text-color);">
+    <h5 class="mb-0"><i class="fas fa-brain me-2"></i>Model Management</h5>
+    <span class="small">Keep your detection model updated</span>
+  </div>
+  <div class="card-body">
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="p-3 border rounded h-100 d-flex flex-column justify-content-between" style="background-color: var(--card-bg);">
+        <div>
+            <h6 class="fw-bold text-success mb-2">
+            <i class="fas fa-trophy me-2"></i>Model Accuracy:
+              <span id="modelAccuracy">
+                {% if model_info and model_info.accuracy is not none and model_info.accuracy != -1 %}
+                  {{ ((model_info.accuracy * 100) if model_info.accuracy <= 1 else model_info.accuracy) | round(2) }}%
+                {% else %}--{% endif %}
+              </span>
+
+            <span id="modelChangeDir">
+              {% if model_info and model_info.change is not none %}
+                {% if model_info.change > 0 %}<i class="fas fa-arrow-up text-success"></i>{% elif model_info.change < 0 %}<i class="fas fa-arrow-down text-danger"></i>{% endif %}
+              {% endif %}
+            </span>
+            </h6>
+            <p class="mb-1">Last Updated: <strong id="modelUpdatedAt">{{ model_info.updated_at if model_info and model_info.updated_at else '--' }}</strong></p>
+            <p class="mb-0">Method: <code id="modelMethod">{{ model_info.method if model_info and model_info.method else '--' }}</code></p>
+          <div class="mt-3 small text-muted" id="modelSpecs" style="display:none;">
+            <span class="me-3">version: <code id="mmVersion">--</code></span>
+            <span class="me-3">features: <code id="mmNFeat">--</code></span>
+            <span>labels: <code id="mmNLab">--</code></span>
+          </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="d-flex flex-column gap-3">
+          <form id="uploadModelForm" enctype="multipart/form-data" class="d-flex flex-column gap-2">
+            <label class="form-label fw-bold mb-1" for="modelUploadInput">
+              <i class="fas fa-upload me-2 text-center"></i> Tip: Upload Trained Model (.pkl)
+            </label>
+            <input type="file" id="modelUploadInput" name="model_file" accept=".pkl" class="form-control" required>
+            <button type="submit" class="btn btn-outline-primary">
+              <i class="fas fa-cloud-upload-alt me-2"></i>Upload & Replace
+            </button>
+          </form>
+          <button class="btn btn-outline-success w-100" id="retrainModelBtn">
+            <i class="fas fa-sync-alt me-2"></i>Retrain Model from DB
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+function removeCamera(btn){
+  const card = btn.closest('.camera-entry');
+  if(!card) return;
+  // find the hidden delete input inside this card and mark it
+  const del = card.querySelector('input[name^="camera_delete_"]');
+  if(del) del.value = "1";
+  // visually hide/disable the row without removing it (keeps indices stable)
+  card.style.opacity = 0.4;
+  card.style.pointerEvents = 'none';
+  const badge = document.createElement('div');
+  badge.className = 'text-danger fw-bold mt-2';
+  badge.textContent = 'Marked for deletion';
+  card.appendChild(badge);
+}
+
+function addCameraField() {
+  const rows = document.getElementById('cameraRows');
+  if (!rows) return;
+  const i = rows.querySelectorAll('.camera-entry').length; // next index
+  const block = document.createElement('div');
+  block.className = 'col camera-entry';
+  block.innerHTML = `
+    <div class="card-header position-relative border rounded p-3" style="background-color: var(--card-header-bg);">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-camera me-1"></i>New Camera</h6>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeCamera(this)">
+          <i class="fas fa-trash me-1"></i>Remove
+        </button>
+      </div>
+      <input type="hidden" name="camera_index" value="${i}">
+      <input type="hidden" name="camera_id_${i}" value="">
+      <div class="row g-2">
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Name</label>
+          <input type="text" class="form-control" name="camera_name_${i}" value="">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Role</label>
+          <select class="form-select" name="camera_role_${i}">
+            <option value="primary">Primary</option>
+            <option value="ptz">PTZ</option>
+            <option value="aux" selected>Aux</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-bold">Stream URL</label>
+          <input type="text" class="form-control" name="camera_url_${i}" value="" required>
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-bold">Snapshot URL (optional)</label>
+          <input type="text" class="form-control" name="camera_snapshot_url_${i}" value="">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Username</label>
+          <input type="text" class="form-control" name="camera_username_${i}" value="">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Password</label>
+          <input type="password" class="form-control" name="camera_password_${i}" value="">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Stream Type</label>
+          <select class="form-select" name="camera_stream_type_${i}">
+            <option value="mjpeg">MJPEG Stream</option>
+            <option value="snapshot">Snapshot Only</option>
+            <option value="rtsp">RTSP Stream</option>
+          </select>
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="activeCamNew${i}" name="camera_enabled_${i}" checked>
+            <label class="form-check-label fw-bold" for="activeCamNew${i}">Active</label>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  rows.appendChild(block);
+}
+
+async function refreshModelSpecs() {
+  try {
+    const r = await fetch("/api/model_sidecar", { credentials:"same-origin" });
+    if (!r.ok) return;
+    const j = await r.json();
+    const v = (j && j.version) || null;
+    const nf = (j && typeof j.n_features === "number") ? j.n_features : ((j && j.features) ? j.features.length : null);
+    const nl = (j && typeof j.n_labels === "number") ? j.n_labels : ((j && j.labels) ? j.labels.length : null);
+
+    const box = document.getElementById("modelSpecs");
+    if (!box) return;
+    const vv = document.getElementById("mmVersion");
+    const ff = document.getElementById("mmNFeat");
+    const ll = document.getElementById("mmNLab");
+    if (v)  vv.textContent = v;
+    if (nf != null) ff.textContent = nf;
+    if (nl != null) ll.textContent = nl;
+    box.style.display = "inline-block";
+  } catch {}
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  refreshModelInfoOnce();
+  setInterval(refreshModelInfoOnce, 15000);
+  refreshModelSpecs();
+  setInterval(refreshModelSpecs, 30000);
+});
+
+async function parseMaybeJson(resp) {
+  const txt = await resp.text();
+  try { return [resp.ok, JSON.parse(txt)]; }
+  catch { return [resp.ok, { error: "Bad response", details: txt.slice(0, 400) }]; }
+}
+
+async function postFirstJson(urls, opts) {
+  let lastErr = null;
+  for (const url of urls) {
+    try {
+      const resp = await fetch(url, opts);
+      // if server says method not allowed, try next endpoint
+      if (resp.status === 405 || resp.status === 404) continue;
+      const [ok, data] = await parseMaybeJson(resp);
+      if (!ok) throw new Error((data && (data.error || data.message)) || resp.statusText);
+      return data;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error("no retrain endpoint responded");
+}
+
+document.getElementById('retrainModelBtn').addEventListener('click', async (ev) => {
+  if (!confirm("Retrain model using all radar data from DB?")) return;
+  const btn = ev.currentTarget;
+  const origHTML = btn.innerHTML;
+  try {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Retraining...';
+    const data = await postFirstJson(
+      ["/api/retrain", "/api/model/retrain", "/retrain_model"],
+      {
+        method: "POST",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ reason: "manual" })
+      }
+    );
+    const acc = (data.accuracy != null) ? `${Number(data.accuracy).toFixed(2)}%` : "OK";
+    alert(`Retrain success: ${acc}`);
+    setModelInfo(data);     // live-update panel
+  } catch (e) {
+    alert(`Retrain error: ${e.message || e}`);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHTML;
+  }
+});
+
+document.getElementById('uploadModelForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);         // must include name="model_file"
+  try {
+    const resp = await fetch("/upload_model", {
+      method: "POST",
+      body: fd,
+      headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+      credentials: "same-origin"
+    });
+    const [ok, data] = await parseMaybeJson(resp);
+    if (!ok) return alert(`Upload failed: ${data.error}\n${data.details || ""}`);
+    alert(data.message || "Model uploaded");
+    // live-update badges if backend returns details
+    setModelInfo(data);
+  } catch (e) {
+    alert(`Upload error: ${e.message}`);
+  }
+});
+</script>
+
+<!-- Calibration & Projection -->
+<div class="card shadow-sm mb-5" id="calibrationCard">
+  <div class="card-header d-flex justify-content-between align-items-center"
+       style="background-color: var(--section-bg); color: var(--text-color);">
+    <h5 class="mb-0"><i class="fas fa-crosshairs me-2"></i>Calibration & Projection</h5>
+    <div class="d-flex align-items-center gap-2">
+      <span id="calibModeBadge" class="badge bg-secondary">Mode: Unknown</span>
+      <span id="modelBadge" class="badge bg-secondary">Model: Unknown</span>
+      <span id="pairsBadge" class="badge bg-secondary">Pairs: 0</span>
+      <span id="errorBadge" class="badge bg-secondary">Median: -- px</span>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <p class="mb-3 text-center">
+      <i class="fas fa-info-circle me-2"></i>
+      Turn <strong>ON</strong> to auto-collect (u,v) ↔ (r,az,el) pairs from matched detections.
+      Fit builds a staged model; Publish makes it live and versioned.
+    </p>
+
+    <div class="d-flex flex-wrap justify-content-center gap-3 mb-3">
+      <button class="btn btn-outline-primary btn-lg" id="btnStart"
+              onclick="calibStart()" type="button">
+        <i class="fas fa-play me-2"></i>Start Collection
+      </button>
+      <button class="btn btn-outline-warning btn-lg" id="btnStop"
+              onclick="calibStop()" type="button">
+        <i class="fas fa-stop me-2"></i>Stop Collection
+      </button>
+      <button class="btn btn-outline-success btn-lg" id="btnFitPublish"
+              onclick="calibFitPublish()" type="button">
+        <i class="fas fa-rocket me-2"></i>Fit &amp; Publish
+      </button>
+      <button class="btn btn-secondary btn-lg" type="button"
+              onclick="return openGuidedWizard()">
+        <i class="fas fa-magic me-2"></i>Guided Wizard
+      </button>
+      <button class="btn btn-outline-danger btn-lg" id="btnRestart"
+              onclick="calibRestart()" type="button">
+        <i class="fas fa-redo me-2"></i>Restart
+      </button>
+    </div>
+    <div class="mb-3 text-center">
+      Tip: For best results, collect 12–20 pairs across the FOV (edges + center).
+    </div>
+    <!-- Inline Guided Wizard (inside Calibration card) -->
+    <div id="calibWizardInline" class="d-none">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between" style="background-color: var(--card-header-bg);">
+          <h6 class="mb-0 text-primary">
+            <i class="fas fa-magic me-2"></i>User-Guided Calibration
+          </h6>
+          <div class="d-flex align-items-center gap-2" id="wizHeaderControls">
+            <!-- Camera select injected by JS -->
+            <button class="btn btn-sm btn-outline-secondary" type="button" onclick="closeGuidedWizard()">
+              <i class="fas fa-times me-1"></i>Close
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-lg-8">
+              <div class="card shadow-sm">
+                <div class="card-header" style="background-color: var(--card-header-bg);">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 text-primary"><i class="fas fa-camera me-2"></i>Snapshot</h6>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-outline-primary btn-sm" id="wizCaptureBtn">
+                        <i class="fas fa-bolt me-1"></i>Capture
+                      </button>
+                     <button class="btn btn-outline-secondary btn-sm" id="wizReloadBtn" title="Reload radar candidates only">
+                        <i class="fas fa-sync me-1"></i>Reload
+                      </button>
+                      <button class="btn btn-outline-warning btn-sm" id="wizUndoBtn">
+                        <i class="fas fa-undo me-1"></i>Undo Last
+                      </button>
+                      <button class="btn btn-outline-danger btn-sm" id="wizResetBtn">
+                        <i class="fas fa-trash-alt me-1"></i>Reset Pairs
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="position-relative">
+                    <img id="wizImg" class="img-fluid rounded border" alt="Calibration snapshot"
+                         style="max-height: 58vh; width: 100%; object-fit: contain;">
+                    <canvas id="wizCanvas"
+                            class="position-absolute top-0 start-0"
+                            style="pointer-events: none;"></canvas>
+                  </div>
+                  <div class="small mt-2">
+                    <i class="fas fa-mouse-pointer me-1"></i>
+                    Click on the object in the image; then choose its radar candidate at right and we’ll add a (u,v)↔(r,az,el) pair.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-4">
+              <div class="card shadow-sm h-100">
+                <div class="card-header" style="background-color: var(--card-header-bg);">
+                  <h6 class="mb-0 text-primary">
+                    <i class="fas fa-radar me-2"></i>Radar Candidates
+                  </h6>
+                </div>
+                <div class="card-body d-flex flex-column">
+                  <div id="wizCands" class="list-group mb-3" style="max-height: 40vh; overflow:auto;"></div>
+                  <div class="d-flex flex-wrap gap-2 mb-3">
+                    <span class="badge bg-dark" id="wizPairsBadge">Pairs: 0</span>
+                    <span class="badge bg-dark" id="wizMedianBadge">Median: -- px</span>
+                  </div>
+                  <div class="d-grid gap-2 mt-auto">
+                    <button class="btn btn-outline-success" id="wizFitBtn">
+                      <i class="fas fa-check me-2"></i>Fit (Stage)
+                    </button>
+                    <button class="btn btn-success" id="wizPublishBtn">
+                      <i class="fas fa-rocket me-2"></i>Publish Live
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div> <!-- /row -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- System Tools and Database Management -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header" style="background-color: var(--section-bg); color: var(--text-color);">
+                <h5 class="mb-0"><i class="fas fa-tools me-2"></i>System Tools</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="d-grid gap-3">
+                    <button type="button" id="btnTestAllCams"
+                            class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-camera me-2"></i>Test Active Cameras
+                    </button>
+                    <button type="submit" name="action" value="test_radar" 
+                            class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-radar me-2"></i>Test Radar Connection
+                    </button>
+                    <button type="submit" name="action" value="backup_db" 
+                            class="btn btn-outline-success btn-lg">
+                        <i class="fas fa-download me-2"></i>Download DB Backup 
+                    </button>
+                    <button type="submit" name="action" value="cleanup_snapshots" 
+                            class="btn btn-outline-warning btn-lg"
+                            onclick="return confirm('Clean up old snapshots based on retention settings?')">
+                        <i class="fas fa-broom me-2"></i>Cleanup Old Snapshots
+                    </button>
+                    <button type="submit" name="action" value="clear_db" 
+                            class="btn btn-outline-danger btn-lg"
+                            onclick="return confirm('This will permanently delete ALL detection data. Continue?')">
+                        <i class="fas fa-trash-alt me-2"></i>Clear All Data
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header" style="background-color: var(--section-bg); color: var(--text-color);">
+                <h5 class="mb-0"><i class="fas fa-database me-2"></i>Database Management</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="backup_file" class="form-label fw-bold">
+                            <i class="fas fa-file-upload me-1"></i>Select Backup File
+                        </label>
+                        <input type="file" id="backup_file" name="backup_file" 
+                               class="form-control form-control-lg" accept=".dump,.backup,.sql" required>
+                    </div>
+                    <br>
+                    <div class="d-grid">
+                        <button type="submit" name="action" value="restore_db" 
+                                class="btn btn-primary btn-lg"
+                                onclick="return confirm('This will replace the current database. Continue?')">
+                            <i class="fas fa-upload me-2"></i>Restore Database
+                        </button>
+                    </div>
+                    <br>
+                    <hr>
+                    <div class="text-center small">
+                        Tip: Prefer a <strong>.dump/.sql</strong> for safer restores.<br>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Results -->
+{% if snapshot %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header" style="background-color: var(--section-bg); color: var(--text-color);">
+                <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Camera Test Result</h5>
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ url_for('serve_snapshot', filename=snapshot) }}" 
+                     class="img-fluid rounded shadow-sm mb-3" 
+                     style="max-height: 400px;" 
+                     alt="Test Snapshot - {{ snapshot }}">
+                <p class="text-success fs-5 mb-0">
+                    <i class="fas fa-check-circle me-2"></i>Camera test successful!
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if message and "Radar test" in message %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header {{ 'bg-success' if 'successful' in message else 'bg-danger' }} text-white">
+                <h5 class="mb-0"><i class="fas fa-satellite-dish me-2"></i>Radar Test Result</h5>
+            </div>
+            <div class="card-body text-center">
+                <p class="{{ 'text-success' if 'successful' in message else 'text-danger' }} fs-5 mb-0">
+                    <i class="fas {{ 'fa-check-circle' if 'successful' in message else 'fa-times-circle' }} me-2"></i>
+                    {{ message }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- System Information -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header" style="background-color: var(--section-bg); color: var(--text-color);">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>System Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card-header h-100" style="background-color: var(--card-header-bg);">
+                            <div class="card-body">
+                                <h6 class="text-primary fw-bold">
+                                    <i class="fas fa-cog me-2"></i>Current Configuration
+                                </h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li><strong>Cooldown:</strong> {{ config.cooldown_seconds }}s</li>
+                                    <li><strong>Retention:</strong> {{ config.retention_days }} days</li>
+                                    <li><strong>Primary Camera:</strong> Camera {{ config.selected_camera + 1 }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card-header h-100" style="background-color: var(--card-header-bg);">
+                            <div class="card-body">
+                                <h6 class="text-primary fw-bold">
+                                    <i class="fas fa-video me-2"></i>Available Cameras
+                                </h6>
+                                {% set list_cams = (db_cameras if db_cameras is defined and db_cameras else (config.cameras or [])) %}
+                                <ul class="list-unstyled mb-0">
+                                  {% for c in list_cams %}
+                                    {% if c.id is defined %}
+                                      <li><strong>ID {{ c.id }}</strong>: {{ c.name or ('Camera ' ~ loop.index) }}</li>
+                                    {% elif c is mapping %}
+                                      <li><strong>ID {{ c.get('id','?') }}</strong>: {{ c.get('name','Camera ' ~ loop.index) }}</li>
+                                    {% else %}
+                                      <li>{{ c }}</li>
+                                    {% endif %}
+                                  {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setModelInfo(info) {
+  try {
+    const accEl = document.getElementById('modelAccuracy');
+    const updEl = document.getElementById('modelUpdatedAt');
+    const metEl = document.getElementById('modelMethod');
+    const chgEl = document.getElementById('modelChangeDir');
+    if (accEl && info && info.accuracy != null) {
+      let a = Number(info.accuracy);
+      if (!Number.isFinite(a)) { a = null; }
+      if (a != null) {
+        const pct = (a <= 1.001) ? a * 100.0 : a;
+        accEl.textContent = `${pct.toFixed(2)}%`;
+      }
+    }
+
+    if (updEl && info && info.updated_at)      updEl.textContent = info.updated_at;
+    if (metEl && info && info.method)          metEl.textContent = info.method;
+    if (chgEl) {
+      let html = '';
+      if (info && typeof info.change === 'number') {
+        if (info.change > 0) html = '<i class="fas fa-arrow-up text-success"></i>';
+        else if (info.change < 0) html = '<i class="fas fa-arrow-down text-danger"></i>';
+      }
+      chgEl.innerHTML = html;
+    }
+  } catch {}
+}
+async function refreshModelInfoOnce() {
+  const endpoints = ["/api/model_info", "/model_info"];
+  for (const ep of endpoints) {
+    try {
+      const r = await fetch(ep, { headers: { "X-Requested-With":"XMLHttpRequest", "Accept":"application/json" }, credentials: "same-origin" });
+      if (!r.ok) continue;
+      const j = await r.json();
+      if (j && (j.accuracy != null || j.updated_at || j.method)) setModelInfo(j);
+      return;
+    } catch { /* try next */ }
+  }
+}
+document.addEventListener("DOMContentLoaded", () => {
+  // initial fetch + gentle polling (keeps panel fresh after background retrains)
+  refreshModelInfoOnce();
+  setInterval(refreshModelInfoOnce, 15000);
+});
+
+const DB_CAMERAS = {{ (db_cameras or [])|tojson }};
+const DEFAULT_CAM_IDX = {{ config.get("selected_camera", 0) or 0 }};
+// Use the DB camera ID of the currently selected index as default:
+const DEFAULT_CAM_ID  = (DB_CAMERAS[DEFAULT_CAM_IDX] && DB_CAMERAS[DEFAULT_CAM_IDX].id) || 0;
+
+function camIndexFromId(id) {
+  const s = String(id);
+  const idx = DB_CAMERAS.findIndex(c => String(c.id) === s);
+  return idx >= 0 ? idx : 0;
+}
+function makeCamSelect(id, selected = DEFAULT_CAM_IDX) {
+  const sel = document.createElement('select');
+  sel.id = id;
+  sel.className = 'form-select form-select-sm';
+  const selectedIdx = (Number.isInteger(selected) && selected < DB_CAMERAS.length)
+    ? selected
+    : camIndexFromId(selected);
+  DB_CAMERAS.forEach((c, i) => {
+    const opt = document.createElement('option');
+    opt.value = String(c.id); // pass DB camera ID
+    opt.textContent = `[${(c.role||'aux').toUpperCase()}] ${c.name||('Camera '+(i+1))}`;
+    if (i === selectedIdx) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  return sel;
+}
+
+function getSelectedCalibCamId() {
+  const a = document.getElementById('calibCamSelect');
+  const b = document.getElementById('wizCamSelect');
+  const val = (a && a.value) || (b && b.value);
+  return (val != null && String(val).length) ? String(val) : String(DEFAULT_CAM_ID);
+}
+async function reloadConfig() {
+  // Try a few likely endpoints so we don't need to change backend names
+  const candidates = ["/reload_config", "/api/reload_config", "/api/config/reload"];
+  let lastErr = null;
+
+  for (const url of candidates) {
+    try {
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+        credentials: "same-origin"
+      });
+
+      // If backend returns JSON, parse message; otherwise treat 2xx as success
+      let msg = "Live configuration reloaded.";
+      if (resp.headers.get("content-type")?.includes("application/json")) {
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+        if (data.message) msg = data.message;
+      } else if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
+
+      alert(msg);
+      // optional: refresh badges/sections that depend on config
+      try { await refreshCalibrationStatus(true); } catch {}
+      return;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  alert("Reload failed: " + (lastErr?.message || "no endpoint responded"));
+}
+async function testActiveCameras() {
+  try {
+    const r = await fetch("/cam_test", { credentials: "same-origin" });
+    const data = await r.json();
+    if (!r.ok) throw new Error((data && data.error) || "Request failed");
+    const lines = (data.results || []).map(x =>
+      `#${x.id} ${x.name || ""} → ${x.ok ? "OK" : "FAILED"} (${x.stream_type || "?"})`
+    );
+    alert(`Tested ${data.count} active camera(s):\n\n` + (lines.join("\n") || "—"));
+  } catch (e) {
+    alert("Active camera test failed: " + e.message);
+  }
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("btnTestAllCams");
+  if (btn) btn.addEventListener("click", testActiveCameras);
+});
+
+function ensureSingleModal(id) {
+  const nodes = document.querySelectorAll('#' + id);
+  nodes.forEach((el, idx) => { if (idx > 0) el.remove(); });
+  return document.getElementById(id);
+}
+// Global cleanup (gallery calls this too)
+window.cleanupModals = function cleanupModals() {
+  document.body.classList.remove('modal-open');
+  document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+};
+
+async function postJSON(url, payload) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+    credentials: "same-origin",
+    body: payload ? JSON.stringify(payload) : null
+  });
+  // Try JSON first; fallback to text
+  try { return await res.json(); } catch { return { status: res.ok ? "ok" : "error" }; }
+}
+
+function setBadge(el, label, cls) {
+  el.textContent = label;
+  el.className = "badge " + cls;
+}
+
+function updatePublishEnabled(status) {
+  // Enable Publish if last fit succeeded or median <= threshold reported by backend
+  const btn = document.getElementById("btnPublish");
+  // Button may not exist anymore (Fit & Publish is single-step now)
+  if (!btn) return;
+  if (!status) { btn.disabled = true; return; }
+  const staged_ok = !!status.staged_ok;
+  const median_px = typeof status.median_px === "number" ? status.median_px : null;
+  const ok_px = typeof status.ok_px === "number" ? status.ok_px : null;
+  btn.disabled = !(staged_ok || (median_px !== null && ok_px !== null && median_px <= ok_px));
+}
+
+async function refreshCalibrationStatus(silent=false) {
+  try {
+    const cam = getSelectedCalibCamId();
+    const res = await fetch(`/api/calibration/status?camera_id=${cam}`, { headers: { "X-Requested-With": "XMLHttpRequest" }, credentials: "same-origin" });
+    if (!res.ok) throw new Error("no status");
+    const data = await res.json();
+
+    const modeBadge = document.getElementById("calibModeBadge");
+    const modelBadge = document.getElementById("modelBadge");
+    const pairsBadge = document.getElementById("pairsBadge");
+    const errorBadge = document.getElementById("errorBadge");
+
+    setBadge(modeBadge, `Mode: ${data.calibration_mode ? 'ON' : 'OFF'}`,
+             data.calibration_mode ? "bg-success" : "bg-secondary");
+    setBadge(modelBadge, `Model: ${data.model_present ? 'Available' : 'Missing'}`,
+             data.model_present ? "bg-info" : "bg-danger");
+    setBadge(pairsBadge, `Pairs: ${data.pairs ?? 0}`, "bg-dark");
+    setBadge(errorBadge, `Median: ${data.median_px ?? '--'} px`, "bg-dark");
+
+    updatePublishEnabled(data);
+  } catch (e) {
+    if (!silent) console.log("Calibration status unavailable:", e);
+  }
+}
+
+async function calibStart() {
+  const r = await postJSON("/calibration/start", { camera_id: getSelectedCalibCamId() });
+  if (r.error) return alert("Start failed: " + r.error);
+  await refreshCalibrationStatus(true);
+}
+
+async function calibStop() {
+  const r = await postJSON("/calibration/stop", { camera_id: getSelectedCalibCamId() });
+  if (r.error) return alert("Stop failed: " + r.error);
+  await refreshCalibrationStatus(true);
+}
+
+async function calibFitPublish() {
+  const r = await postJSON("/calibration/fit_publish", { camera_id: getSelectedCalibCamId() });
+  if (r.error) return alert("Fit & Publish failed: " + r.error);
+  alert(`Published: pairs=${r.pairs ?? '--'}, median=${r.median_px ?? '--'} px${r.path ? `\n${r.path}` : ''}`);
+  await refreshCalibrationStatus(true);
+}
+
+async function calibRestart() {
+  const r = await postJSON("/calibration/restart", { camera_id: getSelectedCalibCamId() });
+  if (r.error) return alert("Restart failed: " + r.error);
+  alert("Calibration restarted (models deleted, pairs cleared, mode ON).");
+  await refreshCalibrationStatus(true);
+}
+
+// First load + 10s interval poll
+document.addEventListener("DOMContentLoaded", () => {
+  // Inject a small "Calibration camera" select next to the badges
+  try {
+    const modelBadge = document.getElementById('modelBadge');
+    if (modelBadge && !document.getElementById('calibCamSelect')) {
+      const host = modelBadge.parentElement || modelBadge;
+      const wrap = document.createElement('div');
+      wrap.className = 'input-group input-group-sm mt-2';
+      const lbl = document.createElement('span');
+      lbl.className = 'input-group-text';
+      lbl.textContent = 'Calibration camera';
+      const sel = makeCamSelect('calibCamSelect');
+      wrap.appendChild(lbl);
+      wrap.appendChild(sel);
+      host.appendChild(wrap);
+      sel.addEventListener('change', () => refreshCalibrationStatus(true));
+    }
+  } catch {}
+  refreshCalibrationStatus(true);
+  setInterval(() => refreshCalibrationStatus(true), 10000);
+});
+
+const CAM_W  = {{ config.camera_width_px or 640 }};
+const CAM_H  = {{ config.camera_height_px or 480 }};
+const FOV_H  = {{ config.camera_fov_h_deg or 90.0 }};
+
+let wizState = {
+  snapshot_path: null,
+  snapshot_url:  null,
+  candidates:    [],
+  selectedIdx:   0,
+  lastClick:     null
+}
+
+function openGuidedWizard() {
+  const host = document.getElementById('calibWizardInline');
+  if (!host) return false;
+  host.classList.remove('d-none');
+  // Inject camera select into header (once)
+  try {
+    const header = document.getElementById('wizHeaderControls');
+    if (header && !document.getElementById('wizCamSelect')) {
+      const lbl = document.createElement('label');
+      lbl.className = 'me-2 small text-muted';
+      lbl.textContent = 'Camera';
+      const sel = makeCamSelect('wizCamSelect', camIndexFromId(getSelectedCalibCamId()));
+      header.prepend(sel);
+      header.prepend(lbl);
+      sel.addEventListener('change', () => {
+        const main = document.getElementById('calibCamSelect');
+        if (main && main.value !== sel.value) main.value = sel.value;
+        refreshCalibrationStatus(true);
+      });
+    }
+  } catch {}
+  // Scroll into view and kick off background work
+  host.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(kickoffWizard, 0);
+  // Persist state in URL
+  try {
+    const u = new URL(window.location);
+    u.searchParams.set('wizard','1');
+    window.history.replaceState({},'',u);
+  } catch {}
+  return false;
+}
+
+async function fetchWithTimeout(url, { timeoutMs = 5000, parseJson = true, ...opts } = {}) {
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal, credentials: 'same-origin', ...opts });
+    if (!parseJson) return res;
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); } catch { json = { ok:false, error: "Bad JSON", details: text.slice(0,400) }; }
+    json._ok = res.ok;
+    return json;
+  } finally {
+    clearTimeout(to);
+  }
+}
+
+// Background kickoff after modal is visible
+let wizKickInFlight = false;
+async function kickoffWizard() {
+  if (wizKickInFlight) return;
+  wizKickInFlight = true;
+  try {
+    if (!wizState.snapshot_path) {
+      const j = await fetchWithTimeout('/api/calibration/reload_candidates', {
+        timeoutMs: 3000,
+        headers: { 'X-Requested-With':'XMLHttpRequest' }
+      });
+      let ok = j && (j._ok !== false) && Array.isArray(j.candidates) && j.candidates.length > 0;
+      if (ok) {
+        wizState.candidates = j.candidates;
+        wizState.selectedIdx = 0;
+        renderCandidates();
+      } else {
+        await wizardCapture(); // fallback path (also timeout-protected below)
+      }
+    } else {
+      wizardReloadCandidates(true).catch(()=>{});
+    }
+  } finally {
+    wizKickInFlight = false;
+  }
+}
+
+async function wizardReloadCandidates(initial=false) {
+  try {
+    const j = await fetchWithTimeout('/api/calibration/reload_candidates', {
+      timeoutMs: 3000,
+      headers: {'X-Requested-With':'XMLHttpRequest'}
+    });
+    if (!j || j._ok === false) throw new Error('bad status');
+    if (!Array.isArray(j.candidates) || j.candidates.length === 0) {
+      if (!initial) alert('No radar candidates available right now.');
+      return false;
+    }
+    wizState.candidates = j.candidates;
+    if (wizState.selectedIdx >= wizState.candidates.length) wizState.selectedIdx = 0;
+    renderCandidates();
+    return true;
+  } catch (e) {
+    if (!initial) console.log('reload candidates failed', e);
+    return false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Auto-open inline wizard if /control?wizard=1
+  try {
+    const u = new URL(window.location);
+    if (u.searchParams.get('wizard') === '1' || u.searchParams.get('w') === '1') {
+      openGuidedWizard();
+    }
+  } catch(e) {}
+
+  // Wire wizard buttons (inline)
+  const byId = id => document.getElementById(id);
+  const wire = (id, fn) => { const el = byId(id); if (el) el.addEventListener('click', fn); };
+  wire('wizCaptureBtn', wizardCapture);
+  wire('wizReloadBtn', () => wizardReloadCandidates(false));
+  wire('wizUndoBtn', wizardUndoLast);
+  wire('wizResetBtn', wizardResetPairs);
+  wire('wizFitBtn', wizardFit);
+  wire('wizPublishBtn', wizardPublish);
+
+  // Click on image → add pair (needs a selected candidate)
+  const img = document.getElementById('wizImg');
+  if (img) {
+    img.addEventListener('load', syncCanvasToImage);
+    img.addEventListener('click', onWizardImageClick);
+  }
+});
+
+function syncCanvasToImage() {
+  // Canvas is absolutely positioned at top-left inside a position-relative wrapper.
+  // Just match rendered size — no manual offset alignment.
+  const img = document.getElementById('wizImg');
+  const cvs = document.getElementById('wizCanvas');
+  const rect = img.getBoundingClientRect();
+  cvs.width  = Math.max(1, Math.floor(rect.width));
+  cvs.height = Math.max(1, Math.floor(rect.height));
+  cvs.style.left = '0px';
+  cvs.style.top  = '0px';
+  drawClickMarker(null);
+}
+
+function drawClickMarker(pt) {
+  const cvs = document.getElementById('wizCanvas');
+  const ctx = cvs.getContext('2d');
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  if (!pt) return;
+  ctx.beginPath();
+  ctx.arc(pt.x, pt.y, 6, 0, Math.PI*2);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#00d1b2';
+  ctx.stroke();
+}
+
+async function wizardCapture() {
+  // Ask backend to capture and also fetch current radar candidates
+  const data = await fetchWithTimeout('/api/calibration/capture_shot', {
+    timeoutMs: 8000,
+    parseJson: true,
+    method: 'POST',
+    headers: {'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json'},
+    body: JSON.stringify({ camera_id: getSelectedCalibCamId() })
+  });
+
+  if (data._ok === false || !data.ok) { 
+    alert(data.error || 'Capture failed'); 
+    return; 
+  }
+
+  wizState.snapshot_path = data.snapshot_path;
+  wizState.snapshot_url  = data.snapshot_url;
+  wizState.candidates    = Array.isArray(data.candidates) ? data.candidates : [];
+  wizState.selectedIdx   = 0;
+  wizState.lastClick     = null;
+
+  // bust cache
+  const img = document.getElementById('wizImg');
+  const sep = (data.snapshot_url.indexOf('?') === -1) ? '?' : '&';
+  img.src = data.snapshot_url + sep + '_=' + Date.now();
+
+  renderCandidates();
+  await wizardRefreshCounts(); // pairs + median
+}
+
+function renderCandidates() {
+  const box = document.getElementById('wizCands');
+  box.innerHTML = '';
+  wizState.candidates.forEach((c, i) => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+    item.innerHTML = `
+      <div>
+        <div><strong>#${i+1}</strong> — ${Number(c.distance_m).toFixed(2)} m</div>
+        <div class="small text-muted">az ${Number(c.azimuth_deg).toFixed(1)}°, el ${Number(c.elevation_deg).toFixed(1)}°</div>
+      </div>
+      <span class="badge ${i===wizState.selectedIdx?'bg-primary':'bg-secondary'}">pick</span>
+    `;
+    item.onclick = () => { wizState.selectedIdx = i; renderCandidates(); };
+    box.appendChild(item);
+  });
+}
+
+async function wizardRefreshCounts() {
+  const cam = getSelectedCalibCamId();
+  try {
+    const res = await fetch(`/api/calibration/pairs?camera_id=${cam}`, { headers: { 'X-Requested-With':'XMLHttpRequest' }, credentials: 'same-origin' });
+    const j = await res.json();
+    document.getElementById('wizPairsBadge').textContent = `Pairs: ${j.count ?? 0}`;
+
+    const st = await (await fetch(`/api/calibration/status?camera_id=${cam}`, { headers:{'X-Requested-With':'XMLHttpRequest'}, credentials: 'same-origin' })).json();
+    const med = (typeof st.median_px === 'number') ? Number(st.median_px).toFixed(2) : '--';
+    document.getElementById('wizMedianBadge').textContent = `Median: ${med} px`;
+  } catch(e) {}
+}
+
+function imagePointToPixelUV(ev) {
+  const img = document.getElementById('wizImg');
+  const rect = img.getBoundingClientRect();
+  const nx = (ev.clientX - rect.left) / rect.width;  // 0..1
+  const ny = (ev.clientY - rect.top)  / rect.height; // 0..1
+  // Convert to original pixel space using the natural resolution of the JPG
+  const u = nx * img.naturalWidth;
+  const v = ny * img.naturalHeight;
+  return { u, v, x: nx*rect.width, y: ny*rect.height };
+}
+
+async function onWizardImageClick(ev) {
+  if (!wizState.snapshot_path) return;
+  if (!wizState.candidates.length) { alert('No radar candidates available'); return; }
+
+  const img = document.getElementById('wizImg');
+  const { u, v, x, y } = imagePointToPixelUV(ev);
+  wizState.lastClick = { x, y };
+  drawClickMarker({ x, y });
+
+  const payload = {
+    snapshot_path: wizState.snapshot_path,
+    u, v,
+    width: img.naturalWidth || CAM_W,
+    height: img.naturalHeight || CAM_H,
+    fov_h_deg: FOV_H,
+    selected_index: wizState.selectedIdx,
+    camera_id: getSelectedCalibCamId()
+  };
+
+  const res = await fetch('/api/calibration/add_click', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+    credentials: 'same-origin',
+    body: JSON.stringify(payload)
+  });
+  const j = await res.json();
+  if (!j.ok) { alert(j.error || 'Add pair failed'); return; }
+
+  await wizardRefreshCounts();
+}
+
+async function wizardUndoLast() {
+
+  const res = await fetch('/api/calibration/undo_last', {
+    method:'POST',
+    headers:{'X-Requested-With':'XMLHttpRequest','Content-Type':'application/json'},
+    credentials: 'same-origin',
+    body: JSON.stringify({ camera_id: getSelectedCalibCamId() })
+  });
+  const j = await res.json();
+  if (!j.ok) { alert(j.error || 'Nothing to undo'); return; }
+  drawClickMarker(null);
+  await wizardRefreshCounts();
+}
+
+async function wizardResetPairs() {
+  if (!confirm('Reset all collected pairs?')) return;
+  const res = await fetch('/calibration/reset_pairs', {
+    method:'POST',
+    headers:{'X-Requested-With':'XMLHttpRequest','Content-Type':'application/json'},
+    credentials: 'same-origin',
+    body: JSON.stringify({ camera_id: getSelectedCalibCamId() })
+  });
+  const j = await res.json();
+  if (j.status !== 'ok') { alert(j.error || 'Reset failed'); return; }
+  drawClickMarker(null);
+  await wizardRefreshCounts();
+}
+
+async function wizardFit() {
+  const res = await fetch('/api/calibration/fit', {
+    method:'POST',
+    headers:{'X-Requested-With':'XMLHttpRequest','Content-Type':'application/json'},
+    credentials: 'same-origin',
+    body: JSON.stringify({ camera_id: getSelectedCalibCamId() })
+  });
+  const j = await res.json();
+  if (!j.ok) { alert(j.error || 'Fit failed'); return; }
+  alert(`Staged model from ${j.pairs} pairs\nMedian reprojection: ${j.median_px} px`);
+  await wizardRefreshCounts();
+}
+
+async function wizardPublish() {
+  const res = await fetch('/api/calibration/publish', {
+    method:'POST',
+    headers:{'X-Requested-With':'XMLHttpRequest','Content-Type':'application/json'},
+    credentials: 'same-origin',
+    body: JSON.stringify({ camera_id: getSelectedCalibCamId() })
+  });
+  const j = await res.json();
+  if (!j.ok) { alert(j.error || 'Publish failed'); return; }
+  alert('Model published live.');
+  await refreshCalibrationStatus(true); // reuse existing control-page badge updater
+}
+
+function closeGuidedWizard() {
+  const host = document.getElementById('calibWizardInline');
+  if (!host) return;
+  host.classList.add('d-none');
+  // Clear URL flag
+  try {
+    const u = new URL(window.location);
+    u.searchParams.delete('wizard'); u.searchParams.delete('w');
+    window.history.replaceState({},'',u);
+  } catch {}
+}
+
+async function calibResetPairsUI() {
+  if (!confirm("Reset all collected calibration pairs?")) return;
+  const r = await postJSON("/calibration/reset_pairs");
+  if (r.error) return alert("Reset failed: " + r.error);
+  alert("Pairs cleared.");
+  refreshCalibrationStatus(true);
+}
+
+async function calibDeleteModelUI() {
+  const which = "both"; // live + staged
+  if (!confirm("Delete live and staged camera models?")) return;
+  const r = await postJSON("/calibration/delete", { which });
+  if (r.error) return alert("Delete failed: " + r.error);
+  alert("Model files deleted.");
+  refreshCalibrationStatus(true);
+}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('btnTestPTZ');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    try {
+      // harmless "nudge" ping (requires autotrack OFF to be safe)
+      const r = await fetch(`/api/ptz/nudge?vx=0&vy=0&sec=0.05`, {
+        method: 'POST',
+        headers: { 'X-Requested-With':'XMLHttpRequest' },
+        credentials: 'same-origin'
+      });
+      const ok = r.ok;
+      let msg = 'PTZ test OK';
+      try { const j = await r.json(); if (j && j.error) { msg = 'PTZ test: ' + j.error; } }
+      catch {}
+      alert(ok ? msg : ('PTZ test failed (HTTP ' + r.status + ')'));
+    } catch (e) {
+      alert('PTZ test error: ' + e.message);
+    }
+  });
+});
+</script>
+</div>
+{% endblock %}

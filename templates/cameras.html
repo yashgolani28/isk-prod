@@ -1,0 +1,826 @@
+{% extends "base.html" %}
+{% block title %}All Cameras{% endblock %}
+{% block content %}
+<style>
+/* compact form + card spacing just for control page */
+.control-compact .card-header{padding:.5rem .75rem}
+.control-compact .card-body{padding:.75rem}
+.control-compact .form-control,
+.control-compact .form-select,
+.control-compact .btn{padding:.35rem .5rem; font-size:.875rem}
+.control-compact .row.g-3{--bs-gutter-x: .75rem; --bs-gutter-y: .75rem}
+.control-compact .row.g-2{--bs-gutter-x: .5rem; --bs-gutter-y: .5rem}
+
+/* PTZ inputs even tighter */
+.control-compact .ptz-settings .form-control,
+.control-compact .ptz-settings .form-select { padding:.25rem .5rem; font-size:.84rem }
+</style>
+<div class="control-compact">
+<style>
+  .vms-toolbar {
+    gap: .5rem;
+  }
+  .vms-grid {
+    display: grid;
+    gap: 12px;
+  }
+  /* Grid presets */
+  .vms-grid.auto { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+  .vms-grid.x1   { grid-template-columns: repeat(1, 1fr); }
+  .vms-grid.x2   { grid-template-columns: repeat(2, 1fr); }
+  .vms-grid.x3   { grid-template-columns: repeat(3, 1fr); }
+
+  .tile {
+    position: relative;
+    background: #0b0b0c;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,.25);
+  }
+  .tile video, .tile img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    background: #000;
+    display: block;
+  }
+  .tile-aspect {
+    position: relative;
+    padding-top: 56.25%; /* 16:9 */
+    background: #000;
+  }
+  .tile-media {
+    position: absolute; inset: 0; 
+  }
+  .tile-header {
+    position: absolute; top: 8px; left: 8px; right: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 3;
+  }
+  .badge-status {
+    border-radius: 999px; padding: 2px 10px; font-size: .75rem;
+    background: rgba(0,0,0,.55); color: #eee; backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+  .badge-status.ok { color: #b6ffb2; border-color: rgba(182,255,178,.25); }
+  .badge-status.err { color: #ffb3b3; border-color: rgba(255,179,179,.25); }
+  .tile-name {
+    padding: 4px 10px; font-weight: 700; font-size: .9rem;
+    background: rgba(0,0,0,.55); color: #fff; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.12);
+  }
+  .tile-controls {
+    position: absolute; right: 8px; bottom: 8px; z-index: 3;
+    display: flex; gap: 6px;
+  }
+  .tile-controls .btn {
+    padding: 4px 8px; font-size: .85rem;
+    background: rgba(0,0,0,.55); color: #eaeaea; border: 1px solid rgba(255,255,255,.12);
+    border-radius: 8px;
+  }
+  .tile-controls .btn:hover { background: rgba(255,255,255,.12); }
+  .tile-footer {
+    position: absolute; left: 8px; bottom: 8px; z-index: 3;
+    font-size: .75rem; color: #c8c8c8;
+    background: rgba(0,0,0,.55); padding: 2px 8px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.12);
+  }
+  .empty-hint {
+    border: 1px dashed rgba(255,255,255,.15);
+    border-radius: 12px; padding: 24px; text-align: center; color: #888;
+  }
+  /* ── PTZ Dock (bottom, horizontal) ─────────────────────────────────────── */
+  .ptz-dock.card {
+    background: var(--card-bg, var(--section-bg, #0f172a));
+    color: var(--text-color, #eaeaea);
+    border: 1px solid var(--border-color, rgba(255,255,255,.12));
+    border-radius: 12px;
+    box-shadow: 0 6px 22px rgba(0,0,0,.45);
+  }
+  .ptz-controls {
+    display: grid;
+    /* lock three clear columns on desktop; still flexible */
+    grid-template-columns: minmax(240px, 280px) 1fr minmax(220px, 280px);
+    gap: 16px;
+    align-items: start;
+  }
+  .ptz-center{ align-self: center; }
+  :root{ --ptz-field-w: 220px; }
+  .ptz-joy {
+    width: 192px; height: 192px; position: relative; user-select: none;
+    border-radius: 20px;
+    background:
+      linear-gradient(180deg, color-mix(in oklab, var(--accent, #3b82f6) 80%, #000 10%), color-mix(in oklab, var(--accent, #3b82f6) 55%, #000 20%));
+    border: 1px solid color-mix(in oklab, var(--accent, #3b82f6) 50%, #000 50%);
+    box-shadow: 0 6px 18px rgba(0,0,0,.35) inset, 0 4px 14px rgba(0,0,0,.25);
+  }
+  .ptz-joy .ring {
+    position: absolute; inset: 12px; border-radius: 16px;
+    border: 2px solid rgba(255,255,255,.18);
+  }
+  /* diagonal “X” guides */
+  .ptz-joy .diag::before,
+  .ptz-joy .diag::after {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    width: 130%; height: 0; border-top: 2px solid rgba(255,255,255,.18);
+    transform-origin: center;
+  }
+  .ptz-joy .diag::before { transform: translate(-50%,-50%) rotate(45deg); }
+  .ptz-joy .diag::after  { transform: translate(-50%,-50%) rotate(-45deg); }
+  /* cardinal chevrons */
+  .ptz-joy .chev { position: absolute; color: rgba(255,255,255,.85); font-size: 14px; }
+  .ptz-joy .chev.t { top: 6px; left: 50%; transform: translateX(-50%); }
+  .ptz-joy .chev.b { bottom: 6px; left: 50%; transform: translateX(-50%) rotate(180deg); }
+  .ptz-joy .chev.l { left: 6px; top: 50%; transform: translateY(-50%) rotate(-90deg); }
+  .ptz-joy .chev.r { right: 6px; top: 50%; transform: translateY(-50%) rotate(90deg); }
+  .ptz-joy .handle {
+    position: absolute; width: 24px; height: 24px; border-radius: 50%;
+    left: 50%; top: 50%; transform: translate(-50%,-50%);
+    background: #fff; box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent, #3aa3ff) 35%, transparent);
+  }
+  .ptz-mini {
+    display: grid; grid-template-columns: repeat(3, 40px); gap: 6px; justify-items: center;
+  }
+  .ptz-mini .btn { width: 40px; }
+  .ptz-stop { min-width: 86px; }
+  .ptz-zoom-vertical .btn { width: 44px; height: 38px; }
+
+  .ptz-pad {
+    width: 192px;
+    height: 192px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    /* Match Column B's gradient and styling */
+    background: linear-gradient(180deg, 
+      color-mix(in oklab, var(--accent, #3b82f6) 80%, #000 10%), 
+      color-mix(in oklab, var(--accent, #3b82f6) 55%, #000 20%));
+    border: 1px solid color-mix(in oklab, var(--accent, #3b82f6) 50%, #000 50%);
+    box-shadow: 0 6px 18px rgba(0,0,0,.35) inset, 0 4px 14px rgba(0,0,0,.25);
+  }
+
+  .ptz-pad .ring { 
+    position: absolute; 
+    inset: 12px; 
+    border-radius: 16px; 
+    border: 2px solid rgba(255,255,255,.18); 
+  }
+
+  .ptz-pad .diag::before,
+  .ptz-pad .diag::after {
+    content: ""; 
+    position: absolute; 
+    left: 50%; 
+    top: 50%;
+    width: 130%; 
+    height: 2px; 
+    background: rgba(255,255,255,.3);
+    transform-origin: center;
+    z-index: 1;
+  }
+  .ptz-pad .diag::before { transform: translate(-50%,-50%) rotate(45deg); }
+  .ptz-pad .diag::after  { transform: translate(-50%,-50%) rotate(-45deg); }
+
+  /* Additional crossing lines for complete X pattern */
+  .ptz-pad .cross-lines::before,
+  .ptz-pad .cross-lines::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    background: rgba(255,255,255,.2);
+    transform-origin: center;
+    z-index: 1;
+  }
+
+  .ptz-pad .cross-lines::before {
+    width: 100%;
+    height: 2px;
+    transform: translate(-50%, -50%);
+  }
+
+  .ptz-pad .cross-lines::after {
+    width: 2px;
+    height: 100%;
+    transform: translate(-50%, -50%);
+  }
+  .ptz-pad .pad-btn {
+    position: absolute; 
+    width: 40px; 
+    height: 40px; 
+    border-radius: 8px; 
+    display: grid; 
+    place-items: center;
+    background: color-mix(in oklab, var(--accent, #3b82f6) 25%, transparent);
+    border: 1px solid rgba(255,255,255,.3);
+    color: var(--text-color, #eaeaea);
+    transition: all .12s ease;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    user-select: none;
+    z-index: 2;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .ptz-pad .pad-btn.cont,
+  .ptz-pad .pad-btn.abs {
+    width: 40px;
+    height: 40px;
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    background: color-mix(in oklab, var(--accent, #3b82f6) 25%, transparent);
+    z-index: 2;
+  }
+  .ptz-pad .pad-btn:hover {
+    background: color-mix(in oklab, var(--accent, #3b82f6) 40%, transparent);
+  }
+  .ptz-pad .pad-btn:active {
+    filter: brightness(0.98);
+  }
+  .ptz-pad .ring, .ptz-pad .diag, .ptz-pad .cross-lines { z-index: 0; pointer-events: none; }
+  .ptz-pad .pad-btn.abs { z-index: 2; width: 34px; height: 34px; }
+  .ptz-pad .pad-btn.cont { z-index: 3; }
+  /* placement */
+  .ptz-pad .top{    left:50%; top:56px;    transform:translateX(-50%); }
+  .ptz-pad .bottom{ left:50%; bottom:56px; transform:translateX(-50%); }
+  .ptz-pad .left{   left:56px;  top:50%;   transform:translateY(-50%); }
+  .ptz-pad .right{  right:56px; top:50%;   transform:translateY(-50%); }
+  /* absolute arrows sit just inside the pad edges to avoid overflow/overlap */
+  .ptz-pad .pad-btn.abs.top    { left: 50%; top: 12px;    transform: translateX(-50%); }
+  .ptz-pad .pad-btn.abs.bottom { left: 50%; bottom: 12px; transform: translateX(-50%); }
+  .ptz-pad .pad-btn.abs.left   { left: 12px;  top: 50%;   transform: translateY(-50%); }
+  .ptz-pad .pad-btn.abs.right  { right: 12px; top: 50%;   transform: translateY(-50%); }
+
+  /* zoom stack centered to pad */
+  .ptz-zoom-stack{ height:192px; display:flex; flex-direction:column; justify-content:center; gap:10px; }
+  .ptz-zoom-stack .btn {
+    width: 50px; 
+    height: 50px;
+    border-radius: 8px;
+    background: color-mix(in oklab, var(--accent, #3b82f6) 25%, transparent);
+    border: 1px solid rgba(255,255,255,.3);
+    color: var(--text-color, #eaeaea);
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all .12s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+
+  .ptz-zoom-stack .btn:hover {
+    background: color-mix(in oklab, var(--accent, #3b82f6) 40%, transparent);
+    transform: translateY(-1px);
+  }
+
+  /* LEFT column polish: aligned widths + tidy labels */
+  .ptz-left .btn{ min-width:72px; }
+  .ptz-left .btn.ptz-stop{ min-width:92px; }
+  .ptz-left .input-group, .ptz-left .range-row { width: var(--ptz-field-w); }
+  .ptz-left .range-row { display:flex; align-items:center; gap:10px; }
+  .ptz-left .range-row span{ display:inline-block; min-width:64px; font-weight:600; opacity:.9; }
+
+  /* Left column tidy */
+  .ptz-left .input-group, .ptz-left .range-row { width: var(--ptz-field-w); }
+  .ptz-left .range-row { display:flex; align-items:center; gap:10px; }
+  .ptz-left .range-row input[type="range"]{ flex:1; }
+  @media (max-width: 992px){
+    .ptz-controls { grid-template-columns: 1fr; gap: 12px; }
+    .ptz-dock .d-flex.align-items-center.justify-content-center { justify-content: flex-start !important; }
+    .ptz-pad{ width: 160px; height: 160px; }
+  }
+</style>
+
+<div class="container-fluid px-3 px-md-4">
+  <div class="d-flex align-items-center justify-content-between my-3">
+    <div>
+      <h3 class="fw-bold mb-1">All Active Cameras</h3>
+      <small>{{ cams|length }} active</small>
+    </div>
+    <div class="d-flex align-items-center vms-toolbar">
+      <div class="btn-group" role="group" aria-label="Layout">
+        <button class="btn btn-sm btn-outline-secondary" data-grid="auto">Auto</button>
+        <button class="btn btn-sm btn-outline-secondary" data-grid="x1">1×1</button>
+        <button class="btn btn-sm btn-outline-secondary" data-grid="x2">2×2</button>
+        <button class="btn btn-sm btn-outline-secondary" data-grid="x3">3×3</button>
+      </div>
+      <button id="refreshAll" class="btn btn-sm btn-outline-primary">Refresh All</button>
+    </div>
+  </div>
+
+  {% if cams|length == 0 %}
+    <div class="empty-hint">
+      No active cameras. Go to Control → Cameras and enable at least one camera.
+    </div>
+  {% else %}
+    <div class="row g-3">
+      <div class="col-12">
+        <div id="vmsGrid" class="vms-grid auto">
+          {% for c in cams %}
+            <div class="tile" data-cam-id="{{ c.id }}" data-name="{{ c.name or ('Camera ' ~ c.id) }}"
+                 data-stream-type="{{ c.stream_type }}" data-role="{{ c.role or 'general' }}">
+              <div class="tile-aspect">
+                <div class="tile-header">
+                  <div class="tile-name">{{ c.name or ('Camera ' ~ c.id) }}</div>
+                  <div class="badge-status" id="status-{{ c.id }}">Connecting…</div>
+                </div>
+                <div class="tile-media">
+                  {% set initial_src = url_for('cam_mjpeg', cam_id=c.id) %}
+                  <img id="media-{{ c.id }}"
+                        src="{{ initial_src }}"
+                        alt="Camera {{ c.id }}" />
+                </div>
+                <div class="tile-controls">
+                  <button class="btn btn-sm" data-action="pause"  data-cam-id="{{ c.id }}">Pause</button>
+                  <button class="btn btn-sm" data-action="resume" data-cam-id="{{ c.id }}">Resume</button>
+                  <button class="btn btn-sm" data-action="refresh" data-cam-id="{{ c.id }}">Refresh</button>
+                  <button class="btn btn-sm" data-action="snapshot" data-cam-id="{{ c.id }}">Snapshot</button>
+                  <button class="btn btn-sm" data-action="fullscreen" data-cam-id="{{ c.id }}">Full</button>
+                </div>
+                <div class="tile-footer">
+                  <span id="fps-{{ c.id }}">—</span>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {% if ptz_capable and is_admin() %}
+    <!-- Bottom horizontal PTZ dock -->
+    <div class="ptz-dock card shadow-sm mt-2">
+      <div class="card-body py-2">
+        <div class="ptz-controls">
+          <!-- Column A (LEFT): Mode → Stop → Auto → TID/Lock/Clear → sliders -->
+          <div class="d-flex flex-column gap-2 align-items-start ptz-left">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div class="btn-group btn-group-sm" role="group" aria-label="PTZ mode (Nudge/Hold)">
+                <input type="radio" class="btn-check" name="ptzMode" id="ptzModeNudge" autocomplete="off" checked>
+                <label class="btn btn-outline-secondary" for="ptzModeNudge" title="Tap = timed nudge">Nudge</label>
+                <input type="radio" class="btn-check" name="ptzMode" id="ptzModeHold" autocomplete="off">
+                <label class="btn btn-outline-secondary" for="ptzModeHold" title="Press & hold = continuous">Hold</label>
+              </div>
+              <button class="btn btn-sm btn-danger ptz-stop" id="ptzStopBtn" title="Hard Stop">STOP</button>
+              <button class="btn btn-sm btn-outline-primary" id="ptzAutoBtn" type="button" title="Toggle radar auto-tracking">
+                Auto: Off
+              </button>
+            </div>
+            <div class="input-group input-group-sm" style="width: var(--ptz-field-w);">
+              <input class="form-control" id="ptzLockTid" placeholder="Track ID">
+              <button class="btn btn-outline-secondary" id="ptzLockBtn"   title="Lock to Track ID">Lock</button>
+              <button class="btn btn-outline-secondary" id="ptzUnlockBtn" title="Clear lock">Clear</button>
+            </div>
+            <div class="range-row">
+              <span>Speed</span>
+              <input id="ptzSpeed" type="range" min="10" max="100" value="40">
+            </div>
+            <div class="range-row">
+              <span>Nudge</span>
+              <input id="ptzNudgeMs" type="range" min="100" max="1200" value="600">
+              <span id="ptzNudgeLabel">600ms</span>
+            </div>
+            <div class="input-group input-group-sm" style="width: var(--ptz-field-w);" title="Absolute step (relative degrees)">
+              <span class="input-group-text">Step°</span>
+              <input class="form-control" id="ptzStepDeg" type="number" value="5" min="0.1" step="0.1">
+            </div>
+            <div class="input-group input-group-sm mt-2" style="width: var(--ptz-field-w);" title="Zoom step (absolute)">
+                <span class="input-group-text">Z&nbsp;Step</span>
+                <input class="form-control" id="ptzZoomStep" type="number" value="0.6" min="0.1" step="0.1">
+            </div>
+          </div>
+
+          <!-- Column B: Joystick -->
+          <div class="d-flex align-items-center justify-content-center ptz-center">
+            <div class="ptz-joy" id="ptzJoy" title="Drag to move (Hold mode)">
+              <div class="ring"></div>
+              <div class="diag"></div>
+              <div class="chev t"></div>
+              <div class="chev b"></div>
+              <div class="chev l"></div>
+              <div class="chev r"></div>
+              <div class="handle" id="ptzJoyHandle"></div>
+            </div>
+          </div>
+
+          <!-- Column C: Dual pad (continuous + absolute) + vertical Zoom -->
+          <div class="d-flex align-items-center gap-3 ptz-center">
+            <div class="ptz-pad">
+              <div class="ring"></div>
+              <div class="diag"></div>
+              <div class="cross-lines"></div>
+              <!-- Continuous (front) -->
+              <button class="pad-btn cont top"    id="ptzUpBtn"    title="Hold/Nudge Up">▲</button>
+              <button class="pad-btn cont bottom" id="ptzDownBtn"  title="Hold/Nudge Down">▼</button>
+              <button class="pad-btn cont left"   id="ptzLeftBtn"  title="Hold/Nudge Left">◀</button>
+              <button class="pad-btn cont right"  id="ptzRightBtn" title="Hold/Nudge Right">▶</button>
+              <!-- Absolute (behind) -->
+              <button class="pad-btn abs top"    id="ptzAbsUp"    title="Absolute Step Up">▲</button>
+              <button class="pad-btn abs bottom" id="ptzAbsDown"  title="Absolute Step Down">▼</button>
+              <button class="pad-btn abs left"   id="ptzAbsLeft"  title="Absolute Step Left">◄</button>
+              <button class="pad-btn abs right"  id="ptzAbsRight" title="Absolute Step Right">►</button>
+            </div>
+              <div class="ptz-zoom-stack">
+                <button class="btn" id="ptzZoomInBtn"  title="Zoom In">+</button>
+                <button class="btn" id="ptzZoomOutBtn" title="Zoom Out">−</button>
+              </div>
+           </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  {% endif %}
+</div>
+
+<script>
+(function(){
+  const grid = document.getElementById('vmsGrid');
+  const refreshAllBtn = document.getElementById('refreshAll');
+  const layoutBtns = document.querySelectorAll('[data-grid]');
+  const POLL_MS = 1000;  // jpeg fallback FPS (~1 fps by default)
+
+  // Maintain per-cam state
+  const cams = {};
+  document.querySelectorAll('.tile').forEach(tile => {
+    const id = tile.dataset.camId;
+    const img = document.getElementById('media-' + id);
+    const status = document.getElementById('status-' + id);
+    cams[id] = { tile, img, status, polling: null, paused: false };
+
+    // Initial MJPEG status transitions → fallback if needed
+    const toPolling = () => {
+      if (cams[id].polling) return;
+      cams[id].polling = setInterval(() => {
+        if (cams[id].paused) return;
+        const base = "{{ url_for('cam_frame', cam_id=0) }}".replace('0', id);
+        cams[id].img.src = base + "?t=" + Date.now();
+      }, POLL_MS);
+      status.textContent = "Polling";
+      status.classList.remove('ok'); status.classList.add('err');
+    };
+
+    img.addEventListener('error', toPolling);
+    img.addEventListener('load', () => {
+      // If MJPEG works, we keep it; if we’re in polling, each load is a new JPEG
+      if (cams[id].polling) {
+        status.textContent = "Live";
+        status.classList.add('ok'); status.classList.remove('err');
+      } else {
+        status.textContent = "Live";
+        status.classList.add('ok'); status.classList.remove('err');
+      }
+      // Heuristic: if natural size is 0 (HTML/no auth), fallback
+      if (!cams[id].polling && (img.naturalWidth === 0 || img.naturalHeight === 0)) {
+        toPolling();
+      }
+    });
+
+    // Tile control handlers
+    tile.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      e.preventDefault();
+      const action = btn.dataset.action;
+      if (action === 'pause') {
+        cams[id].paused = !cams[id].paused;
+        btn.textContent = cams[id].paused ? 'Resume' : 'Pause';
+        if (cams[id].paused) {
+          // Freeze current frame by clearing intervals; keep the last image on screen
+          if (cams[id].polling) { clearInterval(cams[id].polling); cams[id].polling = null; }
+          status.textContent = "Paused";
+          status.classList.remove('ok'); status.classList.add('err');
+        } else {
+          // Resume: if we were on MJPEG originally, try MJPEG again; otherwise polling
+          status.textContent = "Resuming…";
+          status.classList.remove('ok'); status.classList.remove('err');
+          // Reload the src to re-open MJPEG; if server returns HTML or fails, error → polling
+          const mjpeg = "{{ url_for('cam_mjpeg', cam_id=0) }}".replace('0', id);
+          cams[id].img.src = mjpeg + "?t=" + Date.now();
+          setTimeout(() => {
+            // If no load event after a bit, switch to polling
+            if (!cams[id].polling && status.textContent.startsWith("Resuming")) {
+              toPolling();
+            }
+          }, 1200);
+        }
+      }
+      if (action === 'snapshot') {
+        try {
+          // Download current <img> as a file (client-side)
+          const a = document.createElement('a');
+          a.href = cams[id].img.src;
+          a.download = `cam_${id}_${Date.now()}.jpg`;
+          document.body.appendChild(a); a.click(); a.remove();
+        } catch(e){}
+      }
+      if (action === 'fullscreen') {
+        if (tile.requestFullscreen) tile.requestFullscreen();
+        else if (tile.webkitRequestFullscreen) tile.webkitRequestFullscreen();
+      }
+    });
+  });
+
+  // Toolbar: layout switching
+  layoutBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.grid;
+      grid.classList.remove('auto','x1','x2','x3');
+      grid.classList.add(mode);
+    });
+  });
+
+  // Toolbar: refresh all
+  refreshAllBtn?.addEventListener('click', () => {
+    Object.values(cams).forEach(({img, polling, status}) => {
+      if (polling) return; // polling auto-refreshes
+      img.src = img.src.split('?')[0] + '?t=' + Date.now();
+      status.textContent = "Refreshing…";
+      status.classList.remove('ok'); status.classList.remove('err');
+    });
+  });
+
+  // Pause polling when tab is hidden (CPU saver)
+  document.addEventListener('visibilitychange', () => {
+    const hidden = document.hidden;
+    Object.values(cams).forEach(c => {
+      if (!c.polling) return;
+      if (hidden) { clearInterval(c.polling); c.polling = null; c.status.textContent = "Paused (bg)"; }
+      else {
+        if (!c.paused && !c.polling) {
+          c.status.textContent = "Resuming…";
+          c.polling = setInterval(() => {
+            const base = "{{ url_for('cam_frame', cam_id=0) }}".replace('0', c.tile.dataset.camId);
+            c.img.src = base + "?t=" + Date.now();
+          }, POLL_MS);
+        }
+      }
+    });
+  });
+})();
+</script>
+
+{% if ptz_capable and is_admin() %}
+<script>
+(function(){
+  // Bind to the SINGLE sidebar PTZ panel
+  const autoBtn   = document.getElementById("ptzAutoBtn");
+  const warn      = document.getElementById("ptzWarn");
+  const stopBtn   = document.getElementById("ptzStopBtn");
+  const speedEl   = document.getElementById("ptzSpeed");
+  const nudgeEl   = document.getElementById("ptzNudgeMs");
+  const zoomStepEl = document.getElementById("ptzZoomStep");
+  const nudgeLbl  = document.getElementById("ptzNudgeLabel");
+  const modeNudge = document.getElementById("ptzModeNudge");
+  const modeHold  = document.getElementById("ptzModeHold");
+  const joy       = document.getElementById("ptzJoy");
+  const joyHandle = document.getElementById("ptzJoyHandle");
+  const btns = {
+    up:    document.getElementById("ptzUpBtn"),
+    down:  document.getElementById("ptzDownBtn"),
+    left:  document.getElementById("ptzLeftBtn"),
+    right: document.getElementById("ptzRightBtn"),
+    zin:   document.getElementById("ptzZoomInBtn"),
+    zout:  document.getElementById("ptzZoomOutBtn"),
+    lock:  document.getElementById("ptzLockBtn"),
+    clr:   document.getElementById("ptzUnlockBtn"),
+    absL:  document.getElementById("ptzAbsLeft"),
+    absU:  document.getElementById("ptzAbsUp"),
+    absD:  document.getElementById("ptzAbsDown"),
+    absR:  document.getElementById("ptzAbsRight"),
+    step:  document.getElementById("ptzStepDeg"),
+  };
+
+  // Nudge tuning
+  let speed = (+speedEl.value)/100; // [-1..1]
+  let sec   = (+nudgeEl.value)/1000; // seconds per nudge
+  let auto  = false;
+  let holdTimer = null; // keep-alive timer for hold mode
+  let holdDir   = null; // {vx,vy,vz}
+
+  function setDisabled(d){
+    ["up","down","left","right","zin","zout","absL","absU","absD","absR"].forEach(k => { if (btns[k]) btns[k].disabled = d; });
+    if (zoomStepEl) zoomStepEl.disabled = false;
+    if (stopBtn) stopBtn.disabled = false; // Stop is always allowed
+    if (joy) joy.style.opacity = d ? .4 : 1;
+    const ptzPad = document.querySelector('.ptz-pad');
+    if (ptzPad) ptzPad.style.opacity = d ? .4 : 1;
+  }
+  function showWarn(msg){
+    if (!warn) return;
+    warn.textContent = msg || "Auto-track is ON. Turn it OFF to control PTZ manually.";
+    warn.classList.remove("d-none");
+  }
+  function hideWarn(){
+    if (!warn) return;
+    if (!auto) warn.classList.add("d-none");
+  }
+  function updateUI(stat){
+    auto = !!(stat && stat.enabled);
+    if (autoBtn) autoBtn.textContent = "Auto: " + (auto ? "On" : "Off");
+    if (auto){ setDisabled(true); showWarn(); } else { setDisabled(false); hideWarn(); }
+  }
+
+  async function poll(){
+    try{
+      const r = await fetch("/api/ptz/status", {cache:"no-store"});
+      const j = await r.json();
+      if (j && j.ok) updateUI(j.status);
+    }catch(_e){}
+  }
+  // Initial + periodic status
+  poll();
+  setInterval(poll, 2000);
+
+  // API helpers that respect auto-lock
+  async function ptzNudge(dx, dy){
+    if (auto){ showWarn(); return; }
+    const r = await fetch("/api/ptz/nudge", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vx: dx * speed, vy: dy * speed, sec })
+    });
+    if (r.status === 409){
+      const j = await r.json().catch(()=>({}));
+      showWarn(j.message || "Auto-track is ON.");
+    }
+  }
+  async function ptzZoomStep(sign){
+    if (auto){ showWarn(); return; }
+    // Use speed slider as step magnitude; clamp to practical bounds
+    const step = Math.max(0.1, Math.min(2.0, speed * 2.0)); // 0.1..2.0 units
+    const r = await fetch("/api/ptz/move_rel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dzoom: (sign > 0 ? +1 : -1) * step })
+    });
+    if (r.status === 409){
+      const j = await r.json().catch(()=>({}));
+      showWarn(j.message || "Auto-track is ON.");
+    }
+  }
+async function ptzStop() {
+  try {
+    if (window.holdTimer) {     // keepalive interval used during continuous holds
+      clearInterval(window.holdTimer);
+      window.holdTimer = null;
+    }
+    if (typeof window.holdDir !== 'undefined') {
+      window.holdDir = null;
+    }
+  } catch (_) {}
+  await fetch('/api/ptz/stop', { method: 'POST' });
+}
+  async function ptzAbs(dpan, dtilt){
+    if (auto){ showWarn(); return; }
+    await fetch("/api/ptz/move_rel", {
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ dpan, dtilt })
+    });
+  }
+
+  function zoomStepVal(){
+    const v = parseFloat(zoomStepEl && zoomStepEl.value || "0.1");
+    if (!isFinite(v)) return 0.6;
+    return Math.max(0.1, Math.min(3.0, v));
+  }
+  async function ptzZoomStep(sign){
+    if (auto){ showWarn(); return; }
+    const dz = (sign > 0 ? +1 : -1) * zoomStepVal();
+    await fetch("/api/ptz/move_rel", {
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ dzoom: dz })
+    });
+  }
+
+  // Hold-to-move keepalive (sec:0); release → hard stop
+  function startHold(dir){
+    if (auto){ showWarn(); return; }
+    holdDir = dir; // {vx,vy,vz}
+    const send = async () => {
+      if (!holdDir) return;
+      const body = { vx: (holdDir.vx||0), vy:(holdDir.vy||0), sec: 0 };
+      if ("vz" in holdDir) body.vz = holdDir.vz;
+      try { await fetch("/api/ptz/nudge", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) }); } catch(_e){}
+    };
+    send();
+    clearInterval(holdTimer);
+    holdTimer = setInterval(send, 250); // keep motors alive
+  }
+  function endHold(){
+    holdDir = null;
+    clearInterval(holdTimer);
+    holdTimer = null;
+    ptzStop();
+  }
+
+  // Wire buttons
+  autoBtn?.addEventListener("click", async ()=>{
+    try{
+      const r = await fetch("/api/ptz/mode", { method:"POST", headers:{ "Content-Type": "application/json" }, body: JSON.stringify({ enabled: !auto }) });
+      const j = await r.json().catch(()=>null);
+      if (j && j.ok) updateUI(j.state);
+    }catch(_e){}
+  });
+  // Arrow buttons: nudge vs hold
+  const bindHold = (el, dirFn) => {
+    if (!el) return;
+    el.addEventListener("mousedown",  e => { if (modeHold.checked) startHold(dirFn()); });
+    el.addEventListener("touchstart", e => { if (modeHold.checked) startHold(dirFn()); }, {passive:true});
+    el.addEventListener("mouseup",    e => { if (modeHold.checked) endHold(); });
+    el.addEventListener("mouseleave", e => { if (modeHold.checked) endHold(); });
+    el.addEventListener("touchend",   e => { if (modeHold.checked) endHold(); });
+    el.addEventListener("click", e => {
+      if (!modeNudge.checked) return;
+      const d = dirFn();
+      if ("vz" in d) { ptzZoomStep(Math.sign(d.vz||0)); }
+      else { ptzNudge(d.vx?Math.sign(d.vx):0, d.vy?Math.sign(d.vy):0); }
+    });
+  };
+  bindHold(btns.up,    () => ({vx:0, vy:-1*speed}));
+  bindHold(btns.down,  () => ({vx:0, vy:+1*speed}));
+  bindHold(btns.left,  () => ({vx:-1*speed, vy:0}));
+  bindHold(btns.right, () => ({vx:+1*speed, vy:0}));
+  // Zoom press-hold
+  bindHold(btns.zin,  () => ({vz:+1*speed}));
+  bindHold(btns.zout, () => ({vz:-1*speed}));
+
+  // Absolute step arrows (relative degrees)
+  function stepVal(){ const v = parseFloat(btns.step.value||"5"); return isFinite(v)?v:5; }
+  btns.absL?.addEventListener("click", () => ptzAbs(-stepVal(), 0));
+  btns.absR?.addEventListener("click", () => ptzAbs(+stepVal(), 0));
+  btns.absU?.addEventListener("click", () => ptzAbs(0, -stepVal()));
+  btns.absD?.addEventListener("click", () => ptzAbs(0, +stepVal()));
+
+  // STOP
+  stopBtn?.addEventListener("click", ptzStop);
+  btns.lock?.addEventListener("click",  () => {
+    const tid = document.getElementById("ptzLockTid")?.value?.trim();
+    if (tid) fetch("/api/ptz/lock", { method:"POST", headers:{ "Content-Type": "application/json" }, body: JSON.stringify({ tid }) });
+  });
+  btns.clr?.addEventListener("click",   () => {
+    fetch("/api/ptz/lock", { method:"POST", headers:{ "Content-Type": "application/json" }, body: JSON.stringify({ clear: true }) });
+  });
+
+  // Keyboard arrow nudges (+/- zoom), ignore while typing
+  document.addEventListener("keydown", (e) => {
+    if (!e || e.repeat) return;
+    const t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    if (auto) {
+      if (e.key === ' ') { ptzStop(); return; }  // stop always allowed
+      e.preventDefault();                         // prevent page scroll with arrows
+      showWarn();
+      return;
+    }
+    if (modeNudge.checked){
+      if (e.key === "ArrowUp")    { ptzNudge(0, -1); }
+      if (e.key === "ArrowDown")  { ptzNudge(0,  1); }
+      if (e.key === "ArrowLeft")  { ptzNudge(-1, 0); }
+      if (e.key === "ArrowRight") { ptzNudge(1,  0); }
+      if (e.key === '+' || e.key === '=') { ptzZoomStep(+1); }
+      if (e.key === '-' || e.key === '_') { ptzZoomStep(-1); }
+    } else {
+      if (e.key === "ArrowUp")    { startHold({vx:0, vy:-1*speed}); }
+      if (e.key === "ArrowDown")  { startHold({vx:0, vy:+1*speed}); }
+      if (e.key === "ArrowLeft")  { startHold({vx:-1*speed, vy:0}); }
+      if (e.key === "ArrowRight") { startHold({vx:+1*speed, vy:0}); }
+      if (e.key === ' ') { ptzStop(); }
+    }
+  });
+  document.addEventListener("keyup", (e) => { if (modeHold.checked) endHold(); });
+
+  // Joystick logic (only meaningful in Hold mode)
+  function joyCenter(){ const r = joy.getBoundingClientRect(); return {cx:r.left + r.width/2, cy:r.top + r.height/2, rad: Math.min(r.width,r.height)/2 - 14}; }
+  function setHandle(x, y){ joyHandle.style.left = `${x}px`; joyHandle.style.top = `${y}px`; }
+  function resetHandle(){ setHandle(joy.clientWidth/2, joy.clientHeight/2); }
+  resetHandle();
+  let joyActive = false;
+  function norm(v, min, max){ return Math.max(min, Math.min(max, v)); }
+  function onJoyMove(e){
+    if (!joyActive) return;
+    const p = (e.touches && e.touches[0]) ? e.touches[0] : e;
+    const {cx, cy, rad} = joyCenter();
+    let dx = p.clientX - cx, dy = p.clientY - cy;
+    const len = Math.hypot(dx,dy) || 1;
+    if (len > rad){ dx *= rad/len; dy *= rad/len; }
+    // set handle
+    setHandle(joy.clientWidth/2 + dx, joy.clientHeight/2 + dy);
+    // normalized velocities [-1..1] (right+=+, up+=- -> invert for tilt up positive)
+    const nx = norm(dx / rad, -1, 1) * speed;
+    const ny = norm(dy / rad, -1, 1) * speed;
+    startHold({vx: nx, vy: -ny});
+  }
+  function onJoyEnd(){ joyActive = false; resetHandle(); endHold(); }
+  ["mousedown","touchstart"].forEach(ev => joy?.addEventListener(ev, (e)=>{ if (modeHold.checked){ joyActive = true; onJoyMove(e); } }, {passive:true}));
+  ["mousemove","touchmove"].forEach(ev => window.addEventListener(ev, onJoyMove, {passive:true}));
+  ["mouseup","mouseleave","touchend","touchcancel"].forEach(ev => window.addEventListener(ev, onJoyEnd, {passive:true}));
+
+  // Speed & nudge controls
+  speedEl?.addEventListener("input", ()=>{ speed = (+speedEl.value)/100; });
+  nudgeEl?.addEventListener("input", ()=>{ sec = (+nudgeEl.value)/1000; nudgeLbl.textContent = `${nudgeEl.value}ms`; });
+})();
+</script>
+{% endif %}
+{% endblock %}

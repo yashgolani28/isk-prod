@@ -1,0 +1,689 @@
+{% extends "base.html" %}
+{% block title %}User Management - Radar System{% endblock %}
+{% block content %}
+<style>
+/* compact form + card spacing just for control page */
+.control-compact .card-header{padding:.5rem .75rem}
+.control-compact .card-body{padding:.75rem}
+.control-compact .form-control,
+.control-compact .form-select,
+.control-compact .btn{padding:.35rem .5rem; font-size:.875rem}
+.control-compact .row.g-3{--bs-gutter-x: .75rem; --bs-gutter-y: .75rem}
+.control-compact .row.g-2{--bs-gutter-x: .5rem; --bs-gutter-y: .5rem}
+
+/* PTZ inputs even tighter */
+.control-compact .ptz-settings .form-control,
+.control-compact .ptz-settings .form-select { padding:.25rem .5rem; font-size:.84rem }
+</style>
+<div class="control-compact">
+<header class="mb-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="fw-bold" style="color: var(--text-color);">User Management</h2>
+        </div>
+    </div>
+</header>
+
+<main>
+    <!-- Statistics Section -->
+    <section class="row g-4 mb-4" aria-labelledby="stats-heading">
+    <div class="visually-hidden">
+        <h2 id="stats-heading">User Statistics</h2>
+    </div>
+
+    <div class="col-md-6 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-body d-flex flex-column justify-content-center align-items-center">
+            <h5 class="card-title mb-4">Admin vs Viewer Roles</h5>
+            <div class="chart-container" style="height: 240px; width: 240px;">
+            <canvas id="roleChart"></canvas>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-body d-flex flex-column justify-content-center align-items-center">
+            <h5 class="card-title mb-4">Active vs Inactive Users</h5>
+            <div class="chart-container" style="height: 240px; width: 240px;">
+            <canvas id="userChart"></canvas>
+            </div>
+        </div>
+        </div>
+    </div>
+    </section>
+    
+    <!-- System Users Table -->
+    <section class="card border-0 shadow-sm mb-4" aria-labelledby="users-heading">
+        <div class="card-header d-flex justify-content-between align-items-center py-3">
+            <h2 id="users-heading" class="h5 mb-0 text-primary">System Users</h2>
+            <span class="badge bg-info">{{ users|length }} Total</span>
+        </div>
+
+        <div class="card-body p-0">
+            {% if users %}
+            <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" role="table" aria-label="System users list">
+                <thead class="border-bottom" style="background-color: var(--glass-bg); color: var(--text-color);">
+                    <tr>
+                    <th scope="col" class="px-3 py-3">ID</th>
+                    <th scope="col" class="px-3 py-3">Username</th>
+                    <th scope="col" class="px-3 py-3">Role</th>
+                    <th scope="col" class="px-3 py-3">Status</th>
+                    <th scope="col" class="px-3 py-3">Created</th>
+                    <th scope="col" class="px-3 py-3">Last Activity</th>
+                    {% if is_admin %}
+                    <th scope="col" class="px-3 py-3">Actions</th>
+                    {% endif %}
+                    </tr>
+                </thead>
+                <tbody style="background-color: var(--card-bg); color: var(--text-color);">
+                    {% for user in users %}
+                    <tr data-user-id="{{ user.id }}">
+                    <td class="px-3 py-3">
+                        <code class="text-muted small">{{ user.id }}</code>
+                    </td>
+                    <td class="px-3 py-3">
+                        <div class="d-flex align-items-center">
+                        <strong>{{ user.username }}</strong>
+                        {% if user.id == current_user.id %}
+                        <span class="badge bg-info ms-2 small">You</span>
+                        {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-3 py-3">
+                        <span class="badge {{ 'bg-danger' if user.role == 'admin' else 'bg-secondary' }} text-uppercase small">
+                        {{ user.role }}
+                        </span>
+                    </td>
+                    <td class="px-3 py-3">
+                        {% if user.is_active %}
+                        <span class="badge bg-success small"><i class="fas fa-circle me-1"></i>Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary small"><i class="fas fa-circle me-1"></i>Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td data-title="Created">
+                    <span title="{{ user.created_at_ist }}">{{ user.created_at_ist if user.created_at_ist else 'N/A' }}</span>
+                    </td>
+                    <td data-title="Last Activity">
+                    <span title="{{ user.last_activity_ist }}">{{ user.last_activity_ist if user.last_activity_ist else 'N/A' }}</span>
+                    </td>
+                    {% if is_admin %}
+                    <td class="px-3 py-3">
+                        {% if user.id != current_user.id %}
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-user-btn"
+                        data-user-id="{{ user.id }}" data-username="{{ user.username }}">
+                        <i class="fas fa-trash-alt me-1"></i>Delete
+                        </button>
+                        {% else %}
+                        <span class="text-muted small">Protected</span>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <p class="text-muted mb-0">No users found in the system.</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Add User Section (Admin Only) -->
+    {% if is_admin %}
+    <section class="card border-0 shadow-sm mb-4 pt-3" aria-labelledby="add-user-heading">
+        <div class="card-header d-flex justify-content-between align-items-center py-3">
+            <h2 id="add-user-heading" class="h5 mb-0 text-primary">Add New User</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('users') }}" class="row g-3" id="addUserForm">
+                <input type="hidden" name="action" value="add_user">
+                
+                <div class="col-md-4">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" 
+                           required minlength="3" maxlength="50"
+                           pattern="^[a-zA-Z0-9_]+$"
+                           aria-describedby="username-help">
+                    <div id="username-help" class="form-text">3-50 characters, alphanumeric and underscore only</div>
+                    <div class="invalid-feedback">Username must be 3-50 characters and contain only letters, numbers, and underscores.</div>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" 
+                           required minlength="6" maxlength="100"
+                           aria-describedby="password-help">
+                    <div id="password-help" class="form-text">Minimum 6 characters</div>
+                    <div class="invalid-feedback">Password must be at least 6 characters long.</div>
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="role" class="form-label">Role</label>
+                    <select class="form-select" id="role" name="role" required>
+                        <option value="viewer" selected>Viewer</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-user-plus me-1"></i>Add User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Change Password Section -->
+    <section class="card border-0 shadow-sm mb-4" aria-labelledby="change-password-heading">
+        <div class="card-header d-flex justify-content-between align-items-center py-3">
+            <h2 id="change-password-heading" class="h5 mb-0 text-primary">Change Your Password</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('users') }}" class="row g-3" id="changePasswordForm">
+                <input type="hidden" name="action" value="change_password">
+                
+                <div class="col-md-4">
+                    <label for="current_password" class="form-label">Current Password</label>
+                    <input type="password" class="form-control" id="current_password" name="current_password" 
+                           required aria-describedby="current-password-help">
+                    <div id="current-password-help" class="form-text">Enter your current password</div>
+                    <div class="invalid-feedback">Current password is required.</div>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="new_password" class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="new_password" name="new_password" 
+                           required minlength="6" maxlength="100"
+                           aria-describedby="new-password-help">
+                    <div id="new-password-help" class="form-text">Minimum 6 characters</div>
+                    <div class="invalid-feedback">New password must be at least 6 characters long.</div>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                           required minlength="6" maxlength="100"
+                           aria-describedby="confirm-password-help">
+                    <div id="confirm-password-help" class="form-text">Re-enter your new password</div>
+                    <div class="invalid-feedback">Passwords do not match.</div>
+                </div>
+                
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-key me-1"></i>Change Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+
+<!-- Delete User Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteUserModalLabel">Confirm User Deletion</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete user <strong id="deleteUsername"></strong>?</p>
+        <p class="text-danger"><i class="fas fa-exclamation-triangle me-1"></i>This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+          <i class="fas fa-trash-alt me-1"></i>Delete User
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alerts -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1030">
+  <div id="alertContainer"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Fallback cleanup if base didn't define it
+    if (!window.cleanupModals) {
+        window.cleanupModals = function () {
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        };
+    }
+    // Ensure only one delete modal node exists
+    document.querySelectorAll("#deleteUserModal").forEach((el, i) => { if (i > 0) el.remove(); });
+    const deleteModalElement = document.getElementById("deleteUserModal");
+    const deleteModal = deleteModalElement ? bootstrap.Modal.getOrCreateInstance(deleteModalElement, { backdrop: 'static', keyboard: true }) : null;
+    const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+    const deleteUsernameSpan = document.getElementById("deleteUsername");
+    const deleteButtons = document.querySelectorAll(".delete-user-btn");
+    const alertContainer = document.getElementById("alertContainer");
+    let deleteUserId = null;
+    // Focus the primary action when modal opens (good UX & avoids odd focus traps)
+    if (deleteModalElement) {
+        deleteModalElement.addEventListener('shown.bs.modal', () => {
+            confirmDeleteBtn?.focus();
+        });
+    }
+    function showAlert(message, type = 'success') {
+        const alertId = 'alert-' + Date.now();
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert" id="${alertId}">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>`;
+        alertContainer.insertAdjacentHTML('beforeend', alertHtml);
+        setTimeout(() => document.getElementById(alertId)?.remove(), 5000);
+    }
+
+    deleteButtons.forEach(button => {
+        button.addEventListener("click", function () {
+            if (!deleteModal) return;
+            deleteUserId = this.getAttribute("data-user-id");
+            deleteUsernameSpan.textContent = this.getAttribute("data-username");
+            deleteModal.show();
+        });
+    });
+
+    confirmDeleteBtn.addEventListener("click", async function () {
+        if (deleteModal) deleteModal.hide();
+        setTimeout(() => window.cleanupModals && window.cleanupModals(), 200);
+        if (!deleteUserId) {
+            showAlert("No user selected.", "danger");
+            return;
+        }
+
+        const originalText = this.innerHTML;
+        this.innerHTML = "<i class='fas fa-spinner fa-spin me-1'></i>Deleting...";
+        this.disabled = true;
+        // release any stuck focus
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+            document.activeElement.blur();
+        }
+
+        try {
+            const response = await fetch(`/delete_user/${deleteUserId}`, {
+                method: "POST",
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+                credentials: "include"
+            });
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                // After modal fully hides, update UI once
+                const onHidden = function () {
+                    deleteModalElement.removeEventListener("hidden.bs.modal", onHidden);
+                    document.querySelector(`tr[data-user-id="${deleteUserId}"]`)?.remove();
+                    showAlert("User deleted successfully.", "success");
+                };
+                deleteModalElement.addEventListener("hidden.bs.modal", onHidden);
+                // Trigger a single hide; Bootstrap will remove backdrop/focus trap
+                bootstrap.Modal.getOrCreateInstance(deleteUserModal, { backdrop: 'static', keyboard: true }).hide();
+                // Fallback: if backdrop somehow lingers, clean it up
+                setTimeout(() => {
+                    if (document.querySelectorAll('.modal-backdrop').length) {
+                        window.cleanupModals && window.cleanupModals();
+                    }
+                }, 500);
+            } else {
+                showAlert(result.error || "Failed to delete user.", "danger");
+                // Keep modal open so the user can retry or cancel
+                this.disabled = false;
+                this.innerHTML = originalText;
+                return;
+            }
+        } catch (err) {
+            console.error("Delete error:", err);
+            showAlert("An error occurred. See console for details.", "danger");
+           // Keep modal open so the user can retry
+            this.disabled = false;
+            this.innerHTML = originalText;
+            return;
+        } finally {
+            this.innerHTML = originalText;
+            this.disabled = false;
+            deleteUserId = null;
+        }
+    });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const adminCount = {{ users | selectattr('role', 'equalto', 'admin') | list | length }};
+    const viewerCount = {{ users | selectattr('role', 'equalto', 'viewer') | list | length }};
+    const activeCount = {{ users | selectattr('is_active', 'equalto', True) | list | length }};
+    const totalUsers = {{ users | length }};
+    const inactiveCount = totalUsers - activeCount;
+
+    // Role Distribution Doughnut
+    const roleChartCanvas = document.getElementById("roleChart");
+    if (roleChartCanvas) {
+        const ctx = roleChartCanvas.getContext("2d");
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Admin', 'Viewer'],
+                datasets: [{
+                    data: [adminCount, viewerCount],
+                    backgroundColor: ['#f5576c', '#00aaff']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    // Active vs Inactive Doughnut
+    const userChartCanvas = document.getElementById("userChart");
+    if (userChartCanvas) {
+        const ctx2 = userChartCanvas.getContext("2d");
+        new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Active', 'Inactive'],
+                datasets: [{
+                    data: [activeCount, inactiveCount],
+                    backgroundColor: ['#28a745', '#6c757d']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }                 
+            }
+        });
+    }
+});
+</script>
+
+<style>
+/* Additional optimizations */
+.table-responsive {
+    border-radius: 0.375rem;
+}
+
+.card {
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.badge {
+    font-weight: 500;
+}
+
+.chart-container {
+    min-height: 200px;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+.delete-user-btn:hover {
+    transform: translateY(-1px);
+    transition: transform 0.2s ease;
+}
+
+/* Form validation styles */
+.form-control.is-valid,
+.form-select.is-valid {
+    border-color: #198754;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='m2.3 6.73.94-.94 1.72 1.72L7.6 4.86l.94.94L5.48 8.86 2.3 6.73z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 4.6 1.4 1.4 1.4-1.4M8.6 7.4 7.2 6 5.8 7.4'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+/* Alert styles */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.alert-success {
+    background-color: #d1e7dd;
+    color: #0a3622;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #58151c;
+}
+
+/* Loading state for buttons */
+.btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Spinner animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+@media (max-width: 768px) {
+    .display-6 {
+        font-size: 2rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .h2 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    .card,
+    .delete-user-btn {
+        transition: none;
+    }
+}
+
+/* Focus styles for better accessibility */
+.btn:focus,
+.table button:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+/* Loading states */
+.btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Status indicators */
+.badge .fas {
+    font-size: 0.75em;
+}
+
+/* Password strength indicator (optional enhancement) */
+.password-strength {
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 4px;
+    transition: all 0.3s ease;
+}
+
+.password-strength.weak {
+    background-color: #dc3545;
+    width: 33%;
+}
+
+.password-strength.medium {
+    background-color: #ffc107;
+    width: 66%;
+}
+
+.password-strength.strong {
+    background-color: #198754;
+    width: 100%;
+}
+/* Dark Mode Table Fixes */
+[data-theme="dark"] .table {
+    --bs-table-bg: var(--card-bg);
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.05);
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.075);
+    --bs-table-border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .table thead th {
+    background-color: var(--glass-bg) !important;
+    color: var(--text-color) !important;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .table tbody tr {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.075) !important;
+}
+
+[data-theme="dark"] .table tbody td {
+    background-color: transparent !important;
+    color: var(--text-color) !important;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .table tbody td code {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #e83e8c;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+}
+
+[data-theme="dark"] .table tbody td small {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dark"] .table tbody td strong {
+    color: var(--text-color);
+}
+
+/* Badge fixes for dark mode */
+[data-theme="dark"] .badge.bg-info {
+    background-color: #0dcaf0 !important;
+    color: #000 !important;
+}
+
+[data-theme="dark"] .badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+}
+
+[data-theme="dark"] .badge.bg-secondary {
+    background-color: #6c757d !important;
+    color: #fff !important;
+}
+
+[data-theme="dark"] .badge.bg-success {
+    background-color: #198754 !important;
+    color: #fff !important;
+}
+
+/* Button fixes for dark mode */
+[data-theme="dark"] .btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+    background-color: transparent;
+}
+
+[data-theme="dark"] .btn-outline-danger:hover {
+    color: #fff;
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* Card fixes for dark mode */
+[data-theme="dark"] .card {
+    background-color: var(--card-bg) !important;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .card-header {
+    background-color: var(--glass-bg) !important;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .card-body {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+/* Text color fixes */
+[data-theme="dark"] .text-primary {
+    color: #6ea8fe !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Table responsive wrapper */
+[data-theme="dark"] .table-responsive {
+    border-radius: 0.375rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+</style>
+<style>
+/* Ensure alerts never sit above the modal and don't block clicks on it */
+#alertContainer { pointer-events: none; }
+#alertContainer .alert { pointer-events: auto; }
+/* Keep alerts beneath modal/backdrop stack (modal=1050, backdrop=1040) */
+.position-fixed.top-0.end-0.p-3 { z-index: 1030 !important; }
+</style>
+</div>
+{% endblock %}

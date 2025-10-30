@@ -1,0 +1,674 @@
+{% extends "base.html" %}
+{% block title %}System Logs{% endblock %}
+{% block content %}
+<style>
+/* compact form + card spacing just for control page */
+.control-compact .card-header{padding:.5rem .75rem}
+.control-compact .card-body{padding:.75rem}
+.control-compact .form-control,
+.control-compact .form-select,
+.control-compact .btn{padding:.35rem .5rem; font-size:.875rem}
+.control-compact .row.g-3{--bs-gutter-x: .75rem; --bs-gutter-y: .75rem}
+.control-compact .row.g-2{--bs-gutter-x: .5rem; --bs-gutter-y: .5rem}
+
+/* PTZ inputs even tighter */
+.control-compact .ptz-settings .form-control,
+.control-compact .ptz-settings .form-select { padding:.25rem .5rem; font-size:.84rem }
+</style>
+<div class="control-compact">
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Toolbar wrapped in a single form -->
+            <form id="logToolbarForm" action="/logs" method="GET" class="mb-4"
+                  onsubmit="document.getElementById('refreshTs').value = Date.now();">
+                <input type="hidden" id="refreshTs" name="_t" value="">
+                
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold" style="color: var(--text-color);">System Logs</h2>
+                </div>
+
+                <!-- Log Controls -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-filter me-2"></i>Log Controls
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- First Row: Source Selection and Action Buttons -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-xl-6 col-lg-5">
+                                <label class="form-label" for="logSource">Source</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-list me-1"></i> Source
+                                    </span>
+                                    <select id="logSource" name="name" class="form-select" onchange="manualRefresh()">
+                                        {% for s in sources %}
+                                            <option value="{{ s.name }}" {% if s.name == selected_name %}selected{% endif %}>
+                                                {{ s.label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <small class="text-muted">Current: {{ current_label }}</small>
+                            </div>
+                            <div class="col-xl-6 col-lg-7">
+                                <label class="form-label d-block">&nbsp;</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-outline-info flex-fill" onclick="manualRefresh()">
+                                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info flex-fill" onclick="toggleAutoRefresh()">
+                                        <i class="fas fa-clock me-1"></i>Auto: <span id="autoRefreshStatus">Off</span>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info flex-fill" onclick="downloadLogs()">
+                                        <i class="fas fa-download me-1"></i>Download
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Second Row: Filter Controls -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-lg-3 col-md-4">
+                                <label for="logLevel" class="form-label">Filter by Level</label>
+                                <select class="form-select" id="logLevel" name="level" onchange="filterLogs()">
+                                    <option value="">All Levels</option>
+                                    <option value="ERROR">Error</option>
+                                    <option value="WARNING">Warning</option>
+                                    <option value="INFO">Info</option>
+                                    <option value="DEBUG">Debug</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-6 col-md-4">
+                                <label for="searchTerm" class="form-label">Search</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="searchTerm" name="q"
+                                           placeholder="Search log entries..." onkeyup="filterLogs()">
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-4">
+                                <label for="maxLines" class="form-label">Max Lines</label>
+                                <select class="form-select" id="maxLines" name="max" onchange="filterLogs()">
+                                    <option value="100">100 lines</option>
+                                    <option value="500">500 lines</option>
+                                    <option value="1000" selected>1000 lines</option>
+                                    <option value="0">All lines</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Third Row: Clear Button and Counters -->
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-6">
+                                <button type="reset" class="btn btn-primary" onclick="clearLogFilter()">
+                                    <i class="fas fa-eraser me-1"></i>Clear Filters
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-md-end">
+                                    <small class="text-muted">
+                                        <span class="badge bg-secondary me-2">
+                                            Total: <span id="totalEntries">{% if logs %}{{ logs|length }}{% else %}0{% endif %}</span>
+                                        </span>
+                                        <span class="badge bg-info">
+                                            Filtered: <span id="filteredEntries">{% if logs %}{{ logs|length }}{% else %}0{% endif %}</span>
+                                        </span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Log Display -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-terminal me-2"></i>Log Entries
+                        </h5>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="scrollToBottom" checked>
+                            <label class="form-check-label" for="scrollToBottom">
+                                Auto-scroll to bottom
+                            </label>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="logContainer" class="log-container">
+                            {% if logs %}
+                                {% for log_line in logs %}
+                                    <div class="log-entry" data-original-index="{{ loop.index }}">
+                                        <pre class="log-line mb-0">{{ log_line|trim }}</pre>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No log entries found</h5>
+                                    <p class="text-muted">Log file may be empty or not accessible.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="text-center py-3" id="loadMoreContainer">
+                            <button type="button" class="btn btn-outline-light" id="loadMoreBtn" onclick="loadMoreLogs()">
+                                <i class="fas fa-chevron-down me-1"></i>Load More
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.log-container {
+    max-height: 600px;
+    overflow-y: auto;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    border-radius: 0.375rem;
+}
+
+.log-entry {
+    padding: 0.25rem 0.75rem;
+    border-bottom: 1px solid #333;
+    transition: background-color 0.2s;
+}
+
+.log-entry:hover {
+    background-color: #2a2a2a;
+}
+
+.log-entry.filtered-out {
+    display: none;
+}
+
+.log-line {
+    color: var(--text-color);
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Highlight search terms */
+.highlight {
+    background-color: #ffc107;
+    color: #000;
+    padding: 0.1rem 0.2rem;
+    border-radius: 0.2rem;
+}
+
+.log-error {
+    border-left: 4px solid #dc3545;
+}
+.log-warning {
+    border-left: 4px solid #ffc107;
+}
+.log-info {
+    border-left: 4px solid #0dcaf0;
+}
+.log-debug {
+    border-left: 4px solid #6c757d;
+}
+
+/* Custom scrollbar */
+.log-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.log-container::-webkit-scrollbar-track {
+    background: #2a2a2a;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+/* Button improvements */
+.btn-group .btn {
+    white-space: nowrap;
+}
+
+.d-flex .btn {
+    min-width: 100px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .d-flex .btn {
+        min-width: 80px;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .d-flex {
+        flex-direction: column;
+    }
+    
+    .d-flex .btn {
+        min-width: auto;
+        margin-bottom: 0.25rem;
+    }
+    
+    .d-flex .btn:last-child {
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .log-container {
+        max-height: 400px;
+        font-size: 0.8em;
+    }
+    
+    .log-entry {
+        padding: 0.15rem 0.5rem;
+    }
+    
+    .card-header .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.5rem;
+    }
+    
+    .text-md-end {
+        text-align: left !important;
+    }
+    
+    .badge {
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .d-flex.gap-2 {
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+    
+    .flex-fill {
+        flex: none !important;
+    }
+}
+
+/* Improved spacing */
+.card-body {
+    padding: 1.25rem;
+}
+
+.row.g-3 {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+}
+
+/* Badge styling improvements */
+.badge {
+    font-size: 0.75em;
+    padding: 0.35em 0.65em;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+.badge.bg-info {
+    background-color: #0dcaf0 !important;
+    color: #000 !important;
+}
+</style>
+
+<script>
+let autoRefreshInterval = null;
+let autoRefreshActive = false;
+let logContainer;
+let loadMoreBtn;
+let logOffset = 0;
+const LOG_LIMIT = 100;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Apply syntax highlighting to log lines
+    highlightLogLevels();
+    
+    // Scroll to bottom if enabled
+    if (document.getElementById('scrollToBottom').checked) {
+        scrollToBottom();
+    }
+    
+    // Initialize counters
+    updateEntryCounters();
+
+    // Cache elements
+    logContainer = document.getElementById('logContainer');
+    loadMoreBtn = document.getElementById('loadMoreBtn');
+
+    // Reset offset when source changes and reload
+    const src = document.getElementById('logSource');
+    src.addEventListener('change', () => {
+        logOffset = 0;
+        document.getElementById('logToolbarForm').submit();
+    });
+});
+
+function manualRefresh() {
+    const name = document.getElementById('logSource').value;
+    logOffset = 0;
+    fetch(`/api/logs?name=${encodeURIComponent(name)}&offset=0&limit=${LOG_LIMIT}`)
+        .then(r => r.json())
+        .then(data => {
+            updateLogDisplay(data.logs || []);
+            // Toggle "Load More"
+            const loadMore = document.getElementById('loadMoreContainer');
+            if (loadMore) loadMore.style.display = (data.has_more ? '' : 'none');
+            logOffset = (data.logs ? data.logs.length : 0);
+        })
+        .catch(err => console.error('Refresh failed:', err));
+}
+
+function toggleAutoRefresh() {
+    autoRefreshActive = !autoRefreshActive;
+    const statusSpan = document.getElementById('autoRefreshStatus');
+    const btn = event.target.closest('button');
+    
+    if (autoRefreshActive) {
+        statusSpan.textContent = 'On';
+        btn.classList.remove('btn-outline-info');
+        btn.classList.add('btn-success');
+        
+        // Start auto-refresh every 30 seconds
+        autoRefreshInterval = setInterval(() => {
+            const name = document.getElementById('logSource').value;
+            fetch(`/api/logs?name=${encodeURIComponent(name)}&offset=0&limit=${LOG_LIMIT}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.logs && data.logs.length > 0) {
+                        updateLogDisplay(data.logs);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching logs:', error);
+                });
+        }, 30000);
+    } else {
+        statusSpan.textContent = 'Off';
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-info');
+        
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+        }
+    }
+}
+
+function downloadLogs() {
+    // Create a blob with all log content
+    const logEntries = document.querySelectorAll('.log-entry:not(.filtered-out)');
+    let logContent = '';
+    
+    logEntries.forEach(entry => {
+        const logLine = entry.querySelector('.log-line');
+        if (logLine) {
+            logContent += logLine.textContent + '\n';
+        }
+    });
+    
+    const blob = new Blob([logContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `radar_logs_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+function filterLogs() {
+    const level = document.getElementById('logLevel').value.toLowerCase();
+    const search = document.getElementById('searchTerm').value.toLowerCase();
+    const maxLines = parseInt(document.getElementById('maxLines').value);
+    const entries = document.querySelectorAll('.log-entry');
+    
+    let visibleCount = 0;
+    let totalProcessed = 0;
+    
+    entries.forEach((entry, index) => {
+        const logText = entry.querySelector('.log-line').textContent.toLowerCase();
+        let shouldShow = true;
+        
+        // Level filter
+        if (level && !logText.includes(level)) {
+            shouldShow = false;
+        }
+        
+        // Search filter
+        if (search && !logText.includes(search)) {
+            shouldShow = false;
+        }
+        
+        // Max lines filter
+        if (maxLines > 0 && visibleCount >= maxLines) {
+            shouldShow = false;
+        }
+        
+        if (shouldShow) {
+            entry.classList.remove('filtered-out');
+            visibleCount++;
+            
+            // Highlight search terms
+            if (search) {
+                highlightSearchTerm(entry, search);
+            } else {
+                removeHighlights(entry);
+            }
+        } else {
+            entry.classList.add('filtered-out');
+        }
+        
+        totalProcessed++;
+    });
+    
+    updateEntryCounters();
+    
+    // Scroll to bottom if enabled
+    if (document.getElementById('scrollToBottom').checked) {
+        scrollToBottom();
+    }
+}
+
+function clearLogFilter() {
+    document.getElementById('logLevel').value = '';
+    document.getElementById('searchTerm').value = '';
+    document.getElementById('maxLines').value = '1000';
+    
+    // Remove all filters
+    const entries = document.querySelectorAll('.log-entry');
+    entries.forEach(entry => {
+        entry.classList.remove('filtered-out');
+        removeHighlights(entry);
+    });
+    
+    updateEntryCounters();
+}
+
+function highlightSearchTerm(entry, term) {
+    const logLine = entry.querySelector('.log-line');
+    const text = logLine.textContent;
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    
+    if (regex.test(text)) {
+        logLine.innerHTML = text.replace(regex, '<span class="highlight">$1</span>');
+    }
+}
+
+function removeHighlights(entry) {
+    const logLine = entry.querySelector('.log-line');
+    const text = logLine.textContent;
+    logLine.innerHTML = '';
+    logLine.textContent = text;
+}
+
+function highlightLogLevels() {
+    const entries = document.querySelectorAll('.log-entry');
+    entries.forEach(entry => {
+        const logText = entry.querySelector('.log-line').textContent;
+        
+        if (logText.includes('ERROR')) {
+            entry.classList.add('log-error');
+        } else if (logText.includes('WARNING')) {
+            entry.classList.add('log-warning');
+        } else if (logText.includes('INFO')) {
+            entry.classList.add('log-info');
+        } else if (logText.includes('DEBUG')) {
+            entry.classList.add('log-debug');
+        }
+    });
+}
+
+function updateLogDisplay(newLogs) {
+    const container = document.getElementById('logContainer');
+    
+    // Clear existing content
+    container.innerHTML = '';
+    
+    // Add new log entries
+    newLogs.forEach((logLine, index) => {
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'log-entry';
+        entryDiv.setAttribute('data-original-index', index + 1);
+        
+        const preElement = document.createElement('pre');
+        preElement.className = 'log-line mb-0';
+        preElement.textContent = logLine.trim();
+        
+        entryDiv.appendChild(preElement);
+        container.appendChild(entryDiv);
+    });
+    
+    // Reapply filters and highlighting
+    highlightLogLevels();
+    filterLogs();
+    
+    // Scroll to bottom if enabled
+    if (document.getElementById('scrollToBottom').checked) {
+        scrollToBottom();
+    }
+}
+
+function scrollToBottom() {
+    const container = document.getElementById('logContainer');
+    container.scrollTop = container.scrollHeight;
+}
+
+function updateEntryCounters() {
+    const totalEntries = document.querySelectorAll('.log-entry').length;
+    const filteredEntries = document.querySelectorAll('.log-entry:not(.filtered-out)').length;
+    
+    document.getElementById('totalEntries').textContent = totalEntries;
+    document.getElementById('filteredEntries').textContent = filteredEntries;
+}
+
+if (logContainer) {
+    const observer = new MutationObserver(() => {
+        if (document.getElementById('scrollToBottom').checked) {
+            scrollToBottom();
+        }
+    });
+    
+    observer.observe(logContainer, {
+        childList: true,
+        subtree: true
+    });
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    logContainer = document.getElementById('logContainer');
+    loadMoreBtn = document.getElementById('loadMoreBtn');
+
+    loadMoreLogs();  // Load first 100 logs
+
+    // Auto-scroll observer
+    const observer = new MutationObserver(() => {
+        if (document.getElementById('scrollToBottom').checked) {
+            scrollToBottom();
+        }
+    });
+
+    if (logContainer) {
+        observer.observe(logContainer, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    // Highlight log levels initially
+    highlightLogLevels();
+    updateEntryCounters();
+});
+
+function loadMoreLogs() {
+    const name = document.getElementById('logSource').value;
+    fetch(`/api/logs?name=${encodeURIComponent(name)}&offset=${logOffset}&limit=${LOG_LIMIT}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.logs && data.logs.length > 0) {
+                appendLogs(data.logs);
+                logOffset += LOG_LIMIT;
+
+                if (!data.has_more) {
+                    loadMoreBtn.style.display = 'none';
+                }
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load logs:', err);
+            loadMoreBtn.style.display = 'none';
+        });
+}
+
+function appendLogs(logLines) {
+    logLines.forEach((line, idx) => {
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'log-entry';
+        entryDiv.setAttribute('data-original-index', logOffset + idx + 1);
+
+        const pre = document.createElement('pre');
+        pre.className = 'log-line mb-0';
+        pre.textContent = line.trim();
+
+        entryDiv.appendChild(pre);
+        logContainer.appendChild(entryDiv);
+    });
+
+    highlightLogLevels();
+    updateEntryCounters();
+}
+</script>
+</div>
+{% endblock %}

@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+{% block title %}Site Map{% endblock %}
+{% block content %}
+<style>
+/* compact form + card spacing just for control page */
+.control-compact .card-header{padding:.5rem .75rem}
+.control-compact .card-body{padding:.75rem}
+.control-compact .form-control,
+.control-compact .form-select,
+.control-compact .btn{padding:.35rem .5rem; font-size:.875rem}
+.control-compact .row.g-3{--bs-gutter-x: .75rem; --bs-gutter-y: .75rem}
+.control-compact .row.g-2{--bs-gutter-x: .5rem; --bs-gutter-y: .5rem}
+
+/* PTZ inputs even tighter */
+.control-compact .ptz-settings .form-control,
+.control-compact .ptz-settings .form-select { padding:.25rem .5rem; font-size:.84rem }
+</style>
+<div class="control-compact">
+<div class="container-fluid px-3 px-md-4">
+  <div class="d-flex justify-content-between align-items-center my-3">
+    <h2 class="fw-bold mb-0" style="color: var(--text-color);">Site Map</h2>
+    <div class="d-flex gap-2">
+      <button id="addCoverageBtn" class="btn btn-primary btn-sm">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="me-1">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+        </svg>
+        Add Coverage Zone
+      </button>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <strong id="siteName">{{ initial_name or 'Site' }}</strong>
+      </div>
+      <small class="text-muted" id="metaLine"></small>
+    </div>
+    <div class="card-body p-0 position-relative">
+      <div id="siteMap" style="width:100%; height:70vh;"></div>
+
+      <!-- Enhanced and More Visible Legend with Dark Theme -->
+      <div class="position-absolute end-0 bottom-0 m-3 p-3 rounded-3 shadow-lg border" 
+           style="z-index: 600; min-width: 160px; 
+                  background: rgba(31, 41, 55, 0.92); 
+                  border-color: rgba(55, 65, 81, 0.8) !important;
+                  backdrop-filter: blur(12px);
+                  color: #f9fafb;">
+        <div class="fw-bold mb-3 text-center" style="color: #60a5fa;">Coverage Legend</div>
+        <div class="d-flex align-items-center mb-3">
+          <div class="rounded-circle d-inline-flex align-items-center justify-content-center me-3"
+               style="width:32px;height:32px;background:#1f2937;border:2px solid #ffffff;box-shadow:0 2px 8px rgba(0,0,0,.3);">
+            <svg viewBox="0 0 24 24" width="16" height="16" style="color:#fff">
+              <path fill="currentColor" d="M4 7h3l1-2h8l1 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+            </svg>
+          </div>
+          <span class="fw-medium" style="color: #f9fafb;">Camera</span>
+        </div>
+        <div class="d-flex align-items-center mb-3">
+          <div class="rounded-circle d-inline-flex align-items-center justify-content-center me-3"
+               style="width:32px;height:32px;background:#065f46;border:2px solid #ffffff;box-shadow:0 2px 8px rgba(0,0,0,.3);">
+            <svg viewBox="0 0 24 24" width="16" height="16" style="color:#fff">
+              <path fill="currentColor" d="M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7V3zm0 4a5 5 0 1 0 5 5h-2a3 3 0 1 1-3-3V7z"/>
+            </svg>
+          </div>
+          <span class="fw-medium" style="color: #f9fafb;">Radar</span>
+        </div>
+        <div class="d-flex align-items-center">
+          <div class="rounded-circle d-inline-flex align-items-center justify-content-center me-3"
+               style="width:32px;height:32px;background:#dc2626;border:2px solid #ffffff;box-shadow:0 2px 8px rgba(0,0,0,.3);">
+            <svg viewBox="0 0 24 24" width="16" height="16" style="color:#fff">
+              <path fill="currentColor" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+          </div>
+          <span class="fw-medium" style="color: #f9fafb;">Coverage Zone</span>
+        </div>
+      </div>
+
+      <!-- Enhanced Coverage Zone Controls with Dark Theme -->
+      <div id="coverageControls" class="position-absolute start-0 top-0 m-3 p-3 rounded-3 shadow-lg border" 
+           style="z-index: 600; display: none; width: 300px; max-height: 85vh; overflow-y: auto;
+                  background: rgba(31, 41, 55, 0.94); 
+                  border-color: rgba(55, 65, 81, 0.8) !important;
+                  backdrop-filter: blur(12px);
+                  color: #f9fafb;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0 fw-bold" style="color: #60a5fa;">Add Coverage Zone</h6>
+          <button id="closeCoverageBtn" class="btn-close btn-close-white" type="button"></button>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label fw-semibold" style="color: #e5e7eb; font-size: 0.85rem;">Zone Name</label>
+          <input type="text" id="deviceName" class="form-control form-control-sm" 
+                 placeholder="e.g., Front Perimeter, Main Entrance" value=""
+                 style="background: rgba(55, 65, 81, 0.8); border-color: rgba(75, 85, 99, 0.6); color: #f9fafb; font-size: 0.85rem;">
+        </div>
+        
+        <div class="row mb-3">
+          <div class="col-6">
+            <label class="form-label fw-semibold" style="color: #e5e7eb; font-size: 0.85rem;">Coverage Type</label>
+            <select id="deviceType" class="form-select form-select-sm"
+                    style="background: rgba(55, 65, 81, 0.8); border-color: rgba(75, 85, 99, 0.6); color: #f9fafb; font-size: 0.85rem;">
+              <option value="camera">Camera Coverage</option>
+              <option value="radar">Radar Coverage</option>
+              <option value="zone">Alarm Zone</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold" style="color: #e5e7eb; font-size: 0.85rem;">Range (m)</label>
+            <input type="number" id="deviceRange" class="form-control form-control-sm" value="100" min="10" max="1000"
+                   style="background: rgba(55, 65, 81, 0.8); border-color: rgba(75, 85, 99, 0.6); color: #f9fafb; font-size: 0.85rem;">
+          </div>
+        </div>
+        
+        <div class="row mb-3">
+          <div class="col-6">
+            <label class="form-label fw-semibold" style="color: #e5e7eb; font-size: 0.85rem;">Direction (°)</label>
+            <input type="number" id="deviceBearing" class="form-control form-control-sm" value="0" min="0" max="359"
+                   style="background: rgba(55, 65, 81, 0.8); border-color: rgba(75, 85, 99, 0.6); color: #f9fafb; font-size: 0.85rem;">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold" style="color: #e5e7eb; font-size: 0.85rem;">Coverage Arc (°)</label>
+            <input type="number" id="deviceFOV" class="form-control form-control-sm" value="90" min="10" max="360"
+                   style="background: rgba(55, 65, 81, 0.8); border-color: rgba(75, 85, 99, 0.6); color: #f9fafb; font-size: 0.85rem;">
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label fw-semibold" style="color: #e5e7eb; font-size: 0.85rem;">Zone Color</label>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary flex-fill color-btn" data-color="#dc2626" 
+                    style="background:#dc2626; border-color:#dc2626; color: white; height: 32px;">&nbsp;</button>
+            <button type="button" class="btn btn-outline-secondary flex-fill color-btn" data-color="#ea580c" 
+                    style="background:#ea580c; border-color:#ea580c; color: white; height: 32px;">&nbsp;</button>
+            <button type="button" class="btn btn-outline-secondary flex-fill color-btn" data-color="#d97706" 
+                    style="background:#d97706; border-color:#d97706; color: white; height: 32px;">&nbsp;</button>
+            <button type="button" class="btn btn-outline-secondary flex-fill color-btn" data-color="#65a30d" 
+                    style="background:#65a30d; border-color:#65a30d; color: white; height: 32px;">&nbsp;</button>
+            <button type="button" class="btn btn-outline-secondary flex-fill color-btn" data-color="#0891b2" 
+                    style="background:#0891b2; border-color:#0891b2; color: white; height: 32px;">&nbsp;</button>
+            <button type="button" class="btn btn-outline-secondary flex-fill color-btn active" data-color="#7c3aed" 
+                    style="background:#7c3aed; border-color:#7c3aed; color: white; height: 32px;">&nbsp;</button>
+          </div>
+        </div>
+        
+        <div class="d-flex gap-2 mb-3">
+          <button id="confirmCoverageBtn" class="btn btn-success btn-sm flex-fill" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="me-1">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+            Add Zone
+          </button>
+          <button id="cancelCoverageBtn" class="btn btn-outline-light btn-sm">Cancel</button>
+        </div>
+        
+        <div class="alert py-2 mb-0" style="background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3); color: #93c5fd;">
+          <small><strong>Instructions:</strong> Click anywhere on the map to place your coverage zone</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin></script>
+
+<script>
+(function() {
+  // -------------------- prior server-provided values (unchanged) --------------------
+  const mapEl = document.getElementById('siteMap');
+  const meta  = document.getElementById('metaLine');
+  const siteNameEl = document.getElementById('siteName');
+
+  let center = [
+    {{ initial_lat is not none and initial_lat or 'null' }},
+    {{ initial_lon is not none and initial_lon or 'null' }}
+  ];
+  const initialSource = "{{ initial_source|default('static') }}";
+  const initialHdop = {{ (initial_hdop is not none) and initial_hdop or 'null' }};
+  const initialTime = "{{ initial_time or '' }}";
+  const initialAddr = "{{ (initial_addr or '')|e }}";
+
+  // Optional: pass sensors from Flask as list[dict] -> becomes JS array (safe if omitted)
+  const INIT_SENSORS = {{ (initial_sensors or [])|tojson|safe }};
+
+  // -------------------- map setup with satellite view ---------------------------------
+  const hasCenter = Array.isArray(center) && center[0] && center[1];
+  const map = L.map(mapEl, {
+    center: hasCenter ? center : [28.630181, 77.223339],
+    zoom: hasCenter ? 17 : 5,
+    preferCanvas: true,
+    zoomControl: true,
+    attributionControl: true,
+    fadeAnimation: false,
+    zoomAnimation: false,
+    inertia: false
+  });
+
+  // Base layers for map type switching
+  const osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 20, 
+    attribution: '© OpenStreetMap contributors',
+    updateWhenIdle: true, 
+    keepBuffer: 2, 
+    tileSize: 256, 
+    crossOrigin: true
+  });
+
+  const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 18,
+    attribution: '© Esri, Maxar, Earthstar Geographics',
+    updateWhenIdle: true,
+    keepBuffer: 2,
+    tileSize: 256,
+    crossOrigin: true
+  });
+
+  const hybridLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+    maxZoom: 18,
+    attribution: '© Google',
+    updateWhenIdle: true,
+    keepBuffer: 2,
+    tileSize: 256,
+    crossOrigin: true
+  });
+
+  // Add default layer
+  hybridLayer.addTo(map);
+
+  // -------------------- prior functions (kept) -------------------------------------
+  let marker = null;
+  let accuracy = null;
+
+  function fmtTime(ts) {
+    if (!ts) return '';
+    try {
+      const d = new Date(ts);
+      if (isNaN(d)) return ts;
+      return d.toLocaleString();
+    } catch(_) { return ts; }
+  }
+
+  function updateMeta(hdop, ts) {
+    const parts = [];
+    if (typeof hdop === 'number') parts.push(`HDOP ${hdop.toFixed(1)}`);
+    if (ts) parts.push(`fix @ ${fmtTime(ts)}`);
+    meta.textContent = parts.join(' • ');
+  }
+
+  function updatePOI(lat, lon, opts = {}) {
+    if (marker) { marker.remove(); marker = null; }
+    if (accuracy) { accuracy.remove(); accuracy = null; }
+
+    marker = L.marker([lat, lon]).addTo(map);
+
+    const hdop = (typeof opts.hdop === 'number') ? opts.hdop : null;
+    const radius = hdop ? Math.min(Math.max(hdop * 5, 5), 100) : 0;
+    if (radius > 0) {
+      accuracy = L.circle([lat, lon], {
+        radius,
+        color: '#2563eb',
+        fillColor: '#3b82f6',
+        fillOpacity: 0.15,
+        weight: 1
+      }).addTo(map);
+    }
+
+    const name  = opts.name || 'Site';
+    const addr  = opts.address || '';
+    const tstr  = opts.time || '';
+
+    marker.bindPopup(`<strong>${name}</strong><br>${addr}`).openPopup();
+    updateMeta(opts.hdop, tstr);
+
+    map.setView([lat, lon], 17, {animate: false});
+    setTimeout(() => map.invalidateSize(), 120);
+  }
+
+  // Paint initial if available
+  if (hasCenter) {
+    updatePOI(center[0], center[1], {
+      hdop: initialHdop, time: initialTime,
+      name: siteNameEl.textContent, address: initialAddr, source: initialSource
+    });
+  }
+
+  // -------------------- Coverage zone math helpers ---------------------------------
+  const R_EARTH = 6378137; // meters
+  const toRad = (d)=>d*Math.PI/180, toDeg = (r)=>r*180/Math.PI;
+
+  function destinationPoint(lat, lng, distM, bearingDeg){
+    const δ = distM / R_EARTH;
+    const θ = toRad(bearingDeg);
+    const φ1 = toRad(lat), λ1 = toRad(lng);
+    const sinφ1 = Math.sin(φ1), cosφ1 = Math.cos(φ1);
+    const sinδ = Math.sin(δ), cosδ = Math.cos(δ);
+
+    const sinφ2 = sinφ1*cosδ + cosφ1*sinδ*Math.cos(θ);
+    const φ2 = Math.asin(sinφ2);
+    const y = Math.sin(θ)*sinδ*cosφ1;
+    const x = cosδ - sinφ1*sinφ2;
+    const λ2 = λ1 + Math.atan2(y, x);
+    return [toDeg(φ2), ((toDeg(λ2)+540)%360)-180];
+  }
+
+  function buildSector(lat, lng, radiusM, bearingDeg, fovDeg, steps=60){
+    const half = fovDeg/2, start = bearingDeg - half, end = bearingDeg + half;
+    const pts = [[lat, lng]];
+    for(let i=0;i<=steps;i++){
+      const a = start + (i*(end-start)/steps);
+      pts.push(destinationPoint(lat, lng, radiusM, a));
+    }
+    pts.push([lat, lng]);
+    return pts;
+  }
+
+  function makeIcon(type, bearingDeg){
+    const colors = {
+      camera: '#1f2937',
+      radar: '#065f46', 
+      zone: '#dc2626'
+    };
+    
+    const svgPaths = {
+      camera: 'M4 7h3l1-2h8l1 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z',
+      radar: 'M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7V3zm0 4a5 5 0 1 0 5 5h-2a3 3 0 1 1-3-3V7z',
+      zone: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'
+    };
+
+    const bg = colors[type] || colors.zone;
+    const svgPath = svgPaths[type] || svgPaths.zone;
+
+    const html = `
+      <div style="
+        width:34px;height:34px;border-radius:50%;
+        background:${bg};border:2px solid #fff;color:#fff;
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 2px 10px rgba(0,0,0,.4);
+      ">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;transform:rotate(${bearingDeg}deg)">
+          <path fill="currentColor" d="${svgPath}"/>
+        </svg>
+      </div>`;
+    return L.divIcon({html, className:'', iconSize:[34,34], iconAnchor:[17,17], popupAnchor:[0,-18]});
+  }
+
+  // -------------------- Layer management ---------------------------------
+  const baseLayers = {
+    "Street Map": osmLayer,
+    "Satellite": satelliteLayer,
+    "Hybrid": hybridLayer
+  };
+
+  const overlayGroups = {};
+  let userCoverageZones = []; // Store user-added zones
+  let nextZoneId = 1;
+
+  // Initialize default sensors
+  const sensors = (() => {
+    if (Array.isArray(INIT_SENSORS) && INIT_SENSORS.length) return INIT_SENSORS;
+    const lat = hasCenter ? center[0] : 28.6270933;
+    const lon = hasCenter ? center[1] : 77.2210361;
+    return [
+      {name:'Axis M1125', type:'camera', lat, lng:lon, bearing:110, fov:120,  range:120, color:'#63b8f1'},
+      {name:'AXIS P3228-LV', type:'camera', lat, lng:lon, bearing:110, fov:120,  range:120, color:'#6366F1'},
+      {name:'Illustra Pro Gen-4 PTZ', type:'camera', lat, lng:lon, bearing:120, fov:360,  range:120, color:'#f16363'},
+      {name:'IWR6843ISK', type:'radar',  lat, lng:lon, bearing:110, fov:120, range:80,  color:'#10B981'}
+    ];
+  })();
+
+  function createCoverageZone(config) {
+    const group = L.layerGroup();
+    const layerName = `${(config.type||'zone').toUpperCase()}: ${config.name||'Unnamed'}`;
+    
+    const deviceMarker = L.marker([config.lat, config.lng], {
+      icon: makeIcon(config.type, config.bearing||0)
+    }).addTo(group);
+    
+    deviceMarker.bindPopup(
+      `<div class="fw-semibold">${config.name||'Coverage Zone'}</div>
+       <div class="text-muted">Type: ${config.type||'zone'}</div>
+       <div class="text-muted">Direction: ${(config.bearing??0)}&deg;</div>
+       <div class="text-muted">Coverage Arc: ${(config.fov??0)}&deg;</div>
+       <div class="text-muted">Range: ${(config.range??0)} m</div>
+       ${config.isUserAdded ? '<button onclick="deleteCoverageZone('+config.id+')" class="btn btn-sm btn-outline-danger mt-2">Delete Zone</button>' : ''}`
+    );
+
+    const pts = buildSector(config.lat, config.lng, config.range||80, config.bearing||0, config.fov||90, 72);
+    L.polygon(pts, {
+      color: config.color || '#4f46e5', weight: 2,
+      fillColor: config.color || '#4f46e5', fillOpacity: 0.25, opacity: 0.95
+    }).addTo(group);
+
+    const arc = [];
+    const start = (config.bearing||0) - (config.fov||90)/2;
+    const end   = (config.bearing||0) + (config.fov||90)/2;
+    for(let a=start; a<=end; a+=1.5){
+      arc.push(destinationPoint(config.lat, config.lng, config.range||80, a));
+    }
+    L.polyline(arc, {
+      color:config.color||'#4f46e5', 
+      weight:2, 
+      dashArray:'5,8', 
+      opacity:0.9
+    }).addTo(group);
+
+    overlayGroups[layerName] = group;
+    group.addTo(map);
+    
+    return group;
+  }
+
+  // Create initial sensors
+  sensors.forEach(s => createCoverageZone(s));
+
+  // -------------------- User coverage zone controls ---------------------------------
+  const addCoverageBtn = document.getElementById('addCoverageBtn');
+  const coverageControls = document.getElementById('coverageControls');
+  const closeCoverageBtn = document.getElementById('closeCoverageBtn');
+  const confirmCoverageBtn = document.getElementById('confirmCoverageBtn');
+  const cancelCoverageBtn = document.getElementById('cancelCoverageBtn');
+  
+  const deviceNameInput = document.getElementById('deviceName');
+  const deviceTypeSelect = document.getElementById('deviceType');
+  const deviceRangeInput = document.getElementById('deviceRange');
+  const deviceBearingInput = document.getElementById('deviceBearing');
+  const deviceFOVInput = document.getElementById('deviceFOV');
+  const colorButtons = document.querySelectorAll('.color-btn');
+
+  let isPlacingDevice = false;
+  let selectedPosition = null;
+  let selectedColor = '#7c3aed';
+  let previewMarker = null;
+  let previewSector = null;
+
+  // Color selection
+  colorButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      colorButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedColor = btn.dataset.color;
+      updatePreview();
+    });
+  });
+
+  // Input validation
+  function validateInputs() {
+    const name = deviceNameInput.value.trim();
+    const hasPosition = selectedPosition !== null;
+    confirmCoverageBtn.disabled = !name || !hasPosition;
+  }
+
+  deviceNameInput.addEventListener('input', validateInputs);
+
+  // Range/bearing/FOV updates
+  [deviceRangeInput, deviceBearingInput, deviceFOVInput].forEach(input => {
+    input.addEventListener('input', updatePreview);
+  });
+
+  function updatePreview() {
+    if (!selectedPosition || !previewMarker) return;
+    
+    // Remove old preview sector
+    if (previewSector) {
+      map.removeLayer(previewSector);
+      previewSector = null;
+    }
+
+    const range = parseInt(deviceRangeInput.value) || 100;
+    const bearing = parseInt(deviceBearingInput.value) || 0;
+    const fov = parseInt(deviceFOVInput.value) || 90;
+    
+    // Update marker icon
+    previewMarker.setIcon(makeIcon(deviceTypeSelect.value, bearing));
+    
+    // Create new preview sector
+    const pts = buildSector(selectedPosition.lat, selectedPosition.lng, range, bearing, fov, 60);
+    previewSector = L.polygon(pts, {
+      color: selectedColor,
+      fillColor: selectedColor,
+      fillOpacity: 0.2,
+      weight: 2,
+      dashArray: '10,10',
+      opacity: 0.8
+    }).addTo(map);
+  }
+
+  // Show/hide controls
+  addCoverageBtn.addEventListener('click', () => {
+    coverageControls.style.display = 'block';
+    isPlacingDevice = true;
+    map.getContainer().style.cursor = 'crosshair';
+    
+    // Generate default name
+    const type = deviceTypeSelect.value;
+    const typeNames = {
+      'camera': 'Camera Coverage',
+      'radar': 'Radar Coverage', 
+      'zone': 'Alarm Zone'
+    };
+    const count = userCoverageZones.filter(z => z.type === type).length + 1;
+    deviceNameInput.value = `${typeNames[type] || 'Coverage Zone'} ${count}`;
+    validateInputs();
+  });
+
+  function hideCoverageControls() {
+    coverageControls.style.display = 'none';
+    isPlacingDevice = false;
+    selectedPosition = null;
+    map.getContainer().style.cursor = '';
+    
+    if (previewMarker) {
+      map.removeLayer(previewMarker);
+      previewMarker = null;
+    }
+    if (previewSector) {
+      map.removeLayer(previewSector);
+      previewSector = null;
+    }
+  }
+
+  closeCoverageBtn.addEventListener('click', hideCoverageControls);
+  cancelCoverageBtn.addEventListener('click', hideCoverageControls);
+
+  // Map click handling for device placement
+  map.on('click', (e) => {
+    if (!isPlacingDevice) return;
+    
+    selectedPosition = e.latlng;
+    
+    // Remove old preview
+    if (previewMarker) map.removeLayer(previewMarker);
+    if (previewSector) map.removeLayer(previewSector);
+    
+    // Create new preview marker
+    previewMarker = L.marker([selectedPosition.lat, selectedPosition.lng], {
+      icon: makeIcon(deviceTypeSelect.value, parseInt(deviceBearingInput.value) || 0)
+    }).addTo(map);
+    
+    updatePreview();
+    validateInputs();
+  });
+
+  // Confirm new coverage zone
+  confirmCoverageBtn.addEventListener('click', () => {
+    if (!selectedPosition) return;
+    
+    const newZone = {
+      id: nextZoneId++,
+      name: deviceNameInput.value.trim(),
+      type: deviceTypeSelect.value,
+      lat: selectedPosition.lat,
+      lng: selectedPosition.lng,
+      bearing: parseInt(deviceBearingInput.value) || 0,
+      fov: parseInt(deviceFOVInput.value) || 90,
+      range: parseInt(deviceRangeInput.value) || 100,
+      color: selectedColor,
+      isUserAdded: true
+    };
+    
+    userCoverageZones.push(newZone);
+    createCoverageZone(newZone);
+    
+    // Refresh layer control
+    const layerControl = document.querySelector('.leaflet-control-layers');
+    if (layerControl) {
+      map.removeControl(map._layersControl);
+      map._layersControl = L.control.layers(baseLayers, overlayGroups, {collapsed: false}).addTo(map);
+    }
+    
+    hideCoverageControls();
+  });
+
+  // Delete coverage zone function (called from popup)
+  window.deleteCoverageZone = function(zoneId) {
+    const zone = userCoverageZones.find(z => z.id === zoneId);
+    if (!zone) return;
+    
+    // Remove from map
+    const layerName = `${zone.type.toUpperCase()}: ${zone.name}`;
+    if (overlayGroups[layerName]) {
+      map.removeLayer(overlayGroups[layerName]);
+      delete overlayGroups[layerName];
+    }
+    
+    // Remove from array
+    userCoverageZones = userCoverageZones.filter(z => z.id !== zoneId);
+    
+    // Refresh layer control
+    if (map._layersControl) {
+      map.removeControl(map._layersControl);
+      map._layersControl = L.control.layers(baseLayers, overlayGroups, {collapsed: false}).addTo(map);
+    }
+  };
+
+  // Add layer control with base layers and overlays
+  map._layersControl = L.control.layers(baseLayers, overlayGroups, {collapsed: false}).addTo(map);
+  L.control.scale().addTo(map);
+
+  // -------------------- GPS refresh (kept) -----------------------------------
+  function refreshLocation() {
+    fetch("/api/location", {cache: "no-store"})
+      .then(r => r.json())
+      .then(j => {
+        if (!j || !j.ok || !j.lat || !j.lon) return;
+        if (j.name) siteNameEl.textContent = j.name;
+        updatePOI(j.lat, j.lon, {
+          hdop: j.hdop, time: j.time,
+          name: j.name, address: j.address, source: j.source
+        });
+      })
+      .catch(()=>{ /* silent */ });
+  }
+
+  refreshLocation();
+  setInterval(refreshLocation, 60 * 1000);
+})();
+</script>
+</div>
+{% endblock %}

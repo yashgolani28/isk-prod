@@ -1,0 +1,477 @@
+{% extends "base.html" %}
+{% block title %}System Error{% endblock %}
+{% block content %}
+
+<div class="error-container">
+    <div class="error-content">
+        <div class="error-header">
+            <div class="error-icon-placeholder"></div>
+            <h1 class="error-title">System Unavailable</h1>
+            <p class="error-subtitle">{{ message or "An unexpected error has occurred and we're working to resolve it." }}</p>
+        </div>
+        
+        <div class="error-details">
+            <div class="error-info">
+                <h3>What happened?</h3>
+                <p>The radar detection system encountered an issue while processing your request. This could be due to:</p>
+                <ul class="error-reasons">
+                    <li>Temporary server maintenance</li>
+                    <li>Network connectivity issues</li>
+                    <li>Database synchronization delays</li>
+                    <li>System resource optimization</li>
+                </ul>
+            </div>
+            
+            <div class="error-actions">
+                <h3>Recommended Actions</h3>
+                <div class="action-grid">
+                    <div class="action-card" onclick="location.reload()">
+                        <h4>Refresh Page</h4>
+                        <p>Reload the current page to retry your request</p>
+                        <button class="action-btn primary">Refresh Now</button>
+                    </div>
+                    
+                    <div class="action-card" onclick="location.href='/'">
+                        <h4>Return Home</h4>
+                        <p>Go back to the main dashboard</p>
+                        <button class="action-btn secondary">Dashboard</button>
+                    </div>
+                    
+                    <div class="action-card" onclick="history.back()">
+                        <h4>Go Back</h4>
+                        <p>Return to the previous page and wait</p>
+                        <button class="action-btn tertiary">Previous Page</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="error-footer">
+            <div class="support-section">
+                <h4>Need Additional Help?</h4>
+                <p>If this error persists, please contact your system administrator with the following details:</p>
+                <div class="error-metadata">
+                    <div class="metadata-item">
+                        <strong>Timestamp:</strong> <span id="error-timestamp"></span>
+                    </div>
+                    <div class="metadata-item">
+                        <strong>Session ID:</strong> <span id="session-id"></span>
+                    </div>
+                    <div class="metadata-item">
+                        <strong>User Agent:</strong> <span id="user-agent"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-container {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+}
+
+.error-content {
+    max-width: 800px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.error-header {
+    text-align: center;
+    padding: 3rem 2rem 2rem;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: white;
+}
+
+.error-icon-placeholder {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.error-icon-placeholder::before {
+    content: '!';
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: white;
+}
+
+.error-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.error-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.error-details {
+    padding: 2rem;
+}
+
+.error-info {
+    margin-bottom: 2rem;
+}
+
+.error-info h3 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.error-info p {
+    color: #5a6c7d;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.error-reasons {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.error-reasons li {
+    padding: 0.5rem 0;
+    color: #5a6c7d;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.error-reasons li::before {
+    content: '•';
+    color: #667eea;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
+.error-actions h3 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    font-size: 1.3rem;
+}
+
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.action-card {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+    border-color: #667eea;
+}
+
+.action-card h4 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.action-card p {
+    color: #5a6c7d;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.action-btn {
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.action-btn.secondary {
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    color: white;
+}
+
+.action-btn.tertiary {
+    background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+    color: #2c3e50;
+}
+
+.action-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.error-footer {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.support-section h4 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.support-section p {
+    color: #5a6c7d;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.error-metadata {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 4px solid #667eea;
+}
+
+.metadata-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.metadata-item:last-child {
+    border-bottom: none;
+}
+
+.metadata-item strong {
+    color: #2c3e50;
+    flex-shrink: 0;
+    margin-right: 1rem;
+}
+
+.metadata-item span {
+    color: #5a6c7d;
+    text-align: right;
+    font-family: monospace;
+    font-size: 0.9rem;
+    word-break: break-all;
+}
+
+@media (max-width: 768px) {
+    .error-content {
+        margin: 1rem;
+        border-radius: 12px;
+    }
+    
+    .error-header {
+        padding: 2rem 1rem;
+    }
+    
+    .error-title {
+        font-size: 2rem;
+    }
+    
+    .error-details {
+        padding: 1.5rem;
+    }
+    
+    .action-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metadata-item {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .metadata-item span {
+        text-align: left;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set error timestamp
+    document.getElementById('error-timestamp').textContent = new Date().toLocaleString();
+    
+    // Generate session ID (simplified)
+    document.getElementById('session-id').textContent = 'ERR-' + Date.now().toString(36).toUpperCase();
+    
+    // Set user agent (truncated for display)
+    const userAgent = navigator.userAgent;
+    document.getElementById('user-agent').textContent = userAgent.length > 50 ? 
+        userAgent.substring(0, 50) + '...' : userAgent;
+    
+    // Auto-retry functionality
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    function autoRetry() {
+        if (retryCount < maxRetries) {
+            retryCount++;
+            console.log(`Auto-retry attempt ${retryCount} of ${maxRetries}`);
+            
+            // Add visual feedback
+            const primaryBtn = document.querySelector('.action-btn.primary');
+            const originalText = primaryBtn.textContent;
+            primaryBtn.textContent = `Retrying... (${retryCount}/${maxRetries})`;
+            primaryBtn.disabled = true;
+            
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            location.reload();
+        } else if (e.key === 'Escape') {
+            history.back();
+        } else if (e.key === 'h' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            location.href = '/';
+        }
+    });
+    
+    // Connection status check
+    function checkConnection() {
+        fetch('/api/status', { method: 'HEAD' })
+            .then(response => {
+                if (response.ok) {
+                    // Connection restored, show notification
+                    showNotification('Connection restored! Click refresh to continue.', 'success');
+                }
+            })
+            .catch(() => {
+                // Still disconnected
+                showNotification('Connection still unavailable. Retrying...', 'warning');
+            });
+    }
+    
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span>${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()">×</button>
+            </div>
+        `;
+        
+        const style = document.createElement('style');
+        style.textContent = `
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                max-width: 400px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                animation: slideIn 0.3s ease;
+            }
+            
+            .notification.success {
+                background: linear-gradient(135deg, #11998e, #38ef7d);
+                color: white;
+            }
+            
+            .notification.warning {
+                background: linear-gradient(135deg, #f39c12, #e67e22);
+                color: white;
+            }
+            
+            .notification-content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 1rem;
+            }
+            
+            .notification button {
+                background: none;
+                border: none;
+                color: inherit;
+                font-size: 1.5rem;
+                cursor: pointer;
+                padding: 0;
+                margin-left: 1rem;
+            }
+            
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        
+        document.head.appendChild(style);
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+    
+    // Check connection every 10 seconds
+    setInterval(checkConnection, 10000);
+});
+</script>
+
+{% endblock %}
+
