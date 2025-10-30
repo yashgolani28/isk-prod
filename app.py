@@ -1798,6 +1798,7 @@ def get_model_metadata():
     - Sidecar fallback/merge: model_metadata.json (updated_at, source)
     - Enrich: latest row from 'model_metadata' (version, features, labels)
     """
+    _ensure_model_info_schema()
     out = {"accuracy": None, "updated_at": None, "method": None, "change": None,
            "version": None, "features": [], "labels": []}
     # 1) UI table (accuracy + change)
@@ -5904,6 +5905,11 @@ def create_app():
             "change": meta.get("change"),
         }
         return jsonify(out)
+
+    @app.route("/model_info")
+    @login_required
+    def model_info_alias():
+        return api_model_info()
     
     # --- Model I/O helpers --------------------------------------------------------
     def _joblib_load_retry(path: str, attempts: int = 6, base_delay: float = 0.25):
